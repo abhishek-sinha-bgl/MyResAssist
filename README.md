@@ -1,8 +1,8 @@
-# 🧠 MySecondBrain
+# 🧠 MyResAssist
 
 A personal AI research assistant that runs entirely in your browser. No backend, no server, no subscriptions — just bring your own API key and start researching.
 
-**[Live Demo →](https://abhishek-sinha-bgl.github.io/MySecondBrain)
+**[Live Demo →](https://abhishek-sinha-bgl.github.io/MyResAssist)
 
 ![MySecondBrain Screenshot](screenshot.png)
 
@@ -10,7 +10,7 @@ A personal AI research assistant that runs entirely in your browser. No backend,
 
 ## What it does
 
-MySecondBrain helps you research topics deeply and retain what matters. You chat with an AI that searches the web in real time, then automatically extracts key takeaways, suggests follow-up questions, and flags when new findings contradict earlier ones. Everything can be exported to Markdown, Obsidian, or NotebookLM.
+MyResAssist helps you research topics deeply and retain what matters. You chat with an AI that searches the web in real time, then automatically extracts key takeaways, suggests follow-up questions, and flags when new findings contradict earlier ones. Everything can be exported to Markdown, Obsidian, or NotebookLM.
 
 **Core features:**
 
@@ -28,7 +28,7 @@ MySecondBrain helps you research topics deeply and retain what matters. You chat
 
 ## Supported AI Providers
 
-MySecondBrain uses a **Bring Your Own Key (BYOK)** model. Your key is stored only in your browser's `localStorage` and sent directly to the provider — nothing passes through any server.
+MyResAssist uses a **Bring Your Own Key (BYOK)** model. Your key is stored only in your browser's `localStorage` and sent directly to the provider — nothing passes through any server.
 
 | Provider | Models | Web Search |
 |----------|--------|------------|
