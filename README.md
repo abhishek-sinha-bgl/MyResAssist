@@ -2,7 +2,7 @@
 
 A personal AI research assistant that runs entirely in your browser. No backend, no server, no subscriptions — just bring your own API key and start researching.
 
-**[Live Demo →](https://abhishek-sinha-bgl.github.io/MySecondBrain)** *(replace with your GitHub Pages URL)*
+**[Live Demo →](https://abhishek-sinha-bgl.github.io/MySecondBrain)
 
 ![MySecondBrain Screenshot](screenshot.png)
 
