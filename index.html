@@ -1183,8 +1183,11 @@
         <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send (Enter)">➤</button>
       </div>
       <div class="action-btns">
-        <button class="action-btn primary" id="deepBtn" onclick="doDeepResearch()">
-          <span class="btn-icon-inner">🔬</span> Deep Research
+        <button class="action-btn primary" id="deepBtn" onclick="doDeepResearch()" disabled>
+          <span class="btn-icon-inner">🔬</span> Research Deeper
+        </button>
+        <button class="action-btn" id="summaryBtn" onclick="generateSummary()" disabled>
+          <span class="btn-icon-inner">📝</span> Generate Summary
         </button>
         <button class="action-btn" id="saveLocalBtn" onclick="saveLocal()" disabled>
           <span class="btn-icon-inner">⬇</span> Save Local
@@ -2000,7 +2003,7 @@ function getActiveProvider() {
 function setLoading(v) {
   state.isThinking = v;
   document.getElementById('sendBtn').disabled = v;
-  document.getElementById('deepBtn').disabled = v;
+  // deepBtn enabled/disabled by enableExportButtons after first message
   setStatus(v ? 'thinking' : 'idle');
 }
 
@@ -2425,6 +2428,139 @@ function copyTakeaway(i) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// GENERATE SUMMARY
+// ═══════════════════════════════════════════════════════════
+async function generateSummary() {
+  const key = getActiveKey();
+  if (!key || state.messages.length < 2) return;
+
+  const btn = document.getElementById('summaryBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-icon-inner">⏳</span> Summarising...';
+
+  // Build conversation transcript for the prompt
+  const transcript = state.messages
+    .map(m => {
+      const role = m.role === 'user' ? 'User' : 'Assistant';
+      const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+      return `${role}: ${content.substring(0, 1500)}`;
+    })
+    .join('
+
+');
+
+  const topTakeaways = state.takeaways.slice(0, 5);
+  const takeawayContext = topTakeaways.length
+    ? '
+
+Current key takeaways already identified:
+' + topTakeaways.map((t,i) => `${i+1}. ${t.point}`).join('
+')
+    : '';
+
+  const prompt = `You are summarising a research session. Generate a crisp, well-structured summary of the conversation below.
+
+Rules:
+- Maximum 500 words for the summary body (not counting the Top 5 Takeaways)
+- Use bullet points where they aid clarity — avoid long prose paragraphs
+- Be direct and substantive — no filler phrases
+- The Top 5 Takeaways section should list the 5 most important findings, each in one sentence
+- Format: start with a 2-3 sentence overview, then key findings as bullets, then Top 5 Takeaways as a numbered list
+
+Conversation:
+${transcript}${takeawayContext}
+
+Return the summary in clean markdown. Start directly with the content — no preamble.`;
+
+  try {
+    const provider = getActiveProvider();
+    const apiKey = state.keys[provider] || getActiveKey();
+    let summaryText = '';
+
+    if (provider === 'claude') {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: state.models.claude || 'claude-haiku-4-5-20251001', max_tokens: 900, messages: [{ role: 'user', content: prompt }] }),
+      });
+      const d = await res.json(); summaryText = d.content?.[0]?.text || '';
+    } else if (provider === 'openai') {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], max_tokens: 900 }),
+      });
+      const d = await res.json(); summaryText = d.choices?.[0]?.message?.content || '';
+    } else if (provider.startsWith('custom:')) {
+      const cpName = provider.replace('custom:', '');
+      const cp = state.customProviders.find(p => p.name === cpName);
+      if (cp) {
+        const res = await fetch(cp.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cp.key}` },
+          body: JSON.stringify({ model: cp.model, messages: [{ role: 'user', content: prompt }], max_tokens: 900 }),
+        });
+        const d = await res.json(); summaryText = d.choices?.[0]?.message?.content || '';
+      }
+    } else {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${state.models.gemini || 'gemini-2.0-flash'}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 900 } }),
+      });
+      const d = await res.json(); summaryText = d.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+    }
+
+    if (summaryText) {
+      // Show summary as a special chat message with copy + save options
+      const parsed = parseResponse(summaryText);
+      const area = document.getElementById('chatArea');
+      const div = document.createElement('div');
+      div.className = 'msg msg-ai';
+      const msgId = 'summary-' + Date.now();
+      div.id = msgId;
+      div.innerHTML = `
+        <div class="bubble" style="border-left: 3px solid var(--accent-3); padding-left: 14px;">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent-3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">📝 Session Summary</div>
+          ${parsed.html}
+        </div>
+        <div class="msg-meta">
+          🧠 MyResAssist · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+          <button class="copy-response-btn" onclick="copyResponse('${msgId}')" title="Copy summary">copy</button>
+          <button class="copy-response-btn" onclick="saveSummaryAsMarkdown('${msgId}')" title="Save as markdown">save .md</button>
+        </div>
+      `;
+      area.appendChild(div);
+      area.scrollTop = area.scrollHeight;
+      showToast('Summary generated');
+    }
+  } catch(e) {
+    showToast('Summary failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon-inner">📝</span> Generate Summary';
+  }
+}
+
+function saveSummaryAsMarkdown(msgId) {
+  const el = document.getElementById(msgId);
+  if (!el) return;
+  const text = el.querySelector('.bubble').innerText;
+  const date = new Date().toISOString().split('T')[0];
+  const topic = state.activeTopic || 'Research';
+  const md = `# Session Summary — ${topic}
+*${date}*
+
+${text}`;
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `summary-${date}.md`;
+  a.click();
+  showToast('Summary saved as .md');
+}
+
+// ═══════════════════════════════════════════════════════════
 // DEEP RESEARCH
 // ═══════════════════════════════════════════════════════════
 async function doDeepResearch() {
@@ -2532,6 +2668,8 @@ function updateProgress(label, pct) {
 // EXPORT
 // ═══════════════════════════════════════════════════════════
 function enableExportButtons() {
+  document.getElementById('deepBtn').disabled = false;
+  document.getElementById('summaryBtn').disabled = false;
   document.getElementById('saveLocalBtn').disabled = false;
   document.getElementById('notebookBtn').disabled = false;
   document.getElementById('obsidianBtn').disabled = false;
@@ -2550,7 +2688,7 @@ function buildMarkdownSummary() {
     .slice(-5)
     .join('\n');
 
-  return `# Research Summary — MySecondBrain
+  return `# Research Summary — MyResAssist
 **Date:** ${date}${topic}
 
 ---
@@ -2848,7 +2986,7 @@ function resetChatUI() {
       <div class="takeaway-empty-icon">✦</div>
       <p>Run a search to see key takeaways here.</p>
     </div>`;
-  ['saveLocalBtn','notebookBtn','obsidianBtn','exportMdBtn','exportPdfBtn'].forEach(id => {
+  ['deepBtn','summaryBtn','saveLocalBtn','notebookBtn','obsidianBtn','exportMdBtn','exportPdfBtn'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = true;
   });
