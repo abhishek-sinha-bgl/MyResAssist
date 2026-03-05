@@ -2445,17 +2445,11 @@ async function generateSummary() {
       const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
       return `${role}: ${content.substring(0, 1500)}`;
     })
-    .join('
-
-');
+    .join('\n\n');
 
   const topTakeaways = state.takeaways.slice(0, 5);
   const takeawayContext = topTakeaways.length
-    ? '
-
-Current key takeaways already identified:
-' + topTakeaways.map((t,i) => `${i+1}. ${t.point}`).join('
-')
+    ? '\n\nCurrent key takeaways already identified:\n' + topTakeaways.map((t,i) => `${i+1}. ${t.point}`).join('\n')
     : '';
 
   const prompt = `You are summarising a research session. Generate a crisp, well-structured summary of the conversation below.
