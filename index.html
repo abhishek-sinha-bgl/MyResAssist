@@ -1518,24 +1518,45 @@ body.is-mobile #mobileShell {
     </div>
     <div id="customFields" style="display:none;">
       <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">Add any OpenAI-compatible provider: Groq, Mistral, Together AI, Ollama (local), LM Studio, Perplexity, etc.</div>
+      <div id="customEditBanner" style="display:none;background:rgba(79,143,255,0.08);border:1px solid rgba(79,143,255,0.25);border-radius:6px;padding:7px 10px;font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-bottom:10px;display:none;align-items:center;justify-content:space-between;">
+        <span>&#9998; Editing existing provider</span>
+        <button onclick="customCancelEdit()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;">cancel</button>
+      </div>
       <div class="api-field">
         <label>PROVIDER NAME</label>
         <input type="text" class="api-input" id="customName" placeholder="e.g. Groq, Mistral, Ollama..." />
       </div>
       <div class="api-field">
         <label>API ENDPOINT (OpenAI-compatible)</label>
-        <input type="text" class="api-input" id="customEndpoint" placeholder="https://api.groq.com/openai/v1/chat/completions" />
+        <input type="text" class="api-input" id="customEndpoint" placeholder="https://api.groq.com/openai/v1/chat/completions"
+          onblur="customTryFetchModels()" />
       </div>
       <div class="api-field">
         <label>API KEY</label>
         <div class="api-input-wrap">
-          <input type="password" class="api-input" id="customKey" placeholder="your-api-key (or skip for local)" />
+          <input type="password" class="api-input" id="customKey" placeholder="your-api-key (or skip for local)"
+            onblur="customTryFetchModels()" />
           <button class="toggle-visibility" onclick="toggleApiVisibility('customKey')">&#128065;</button>
         </div>
       </div>
       <div class="api-field">
-        <label>MODEL NAME</label>
-        <input type="text" class="api-input" id="customModel" placeholder="e.g. llama-3.3-70b-versatile, mistral-large-latest..." />
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          MODEL
+          <span id="customModelFetchStatus" style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);font-weight:400;"></span>
+        </label>
+        <!-- Dropdown shown when models fetched successfully -->
+        <select class="api-input" id="customModelSelect" style="display:none;"></select>
+        <!-- Manual text input fallback -->
+        <input type="text" class="api-input" id="customModel" placeholder="e.g. llama-3.3-70b-versatile..." />
+        <div style="margin-top:5px;display:flex;gap:6px;align-items:center;">
+          <button id="customFetchModelsBtn" onclick="customFetchModels()"
+            style="font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--accent-3);cursor:pointer;white-space:nowrap;">
+            &#8635; Fetch models
+          </button>
+          <span id="customModelToggleWrap" style="display:none;">
+            <button onclick="customToggleModelInput()" style="font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-muted);cursor:pointer;" id="customModelToggleBtn">type manually</button>
+          </span>
+        </div>
       </div>
       <div id="savedCustomList" style="margin-top:8px;display:flex;flex-direction:column;gap:5px;"></div>
     </div>
@@ -1956,15 +1977,24 @@ function saveApiKey() {
     const name = document.getElementById('customName').value.trim();
     const endpoint = document.getElementById('customEndpoint').value.trim();
     const key = document.getElementById('customKey').value.trim();
-    const model = document.getElementById('customModel').value.trim();
+    // Prefer dropdown selection, fall back to manual text input
+    const sel = document.getElementById('customModelSelect');
+    const model = (sel.style.display !== 'none' && sel.value)
+      ? sel.value
+      : document.getElementById('customModel').value.trim();
     if (!name||!endpoint||!model) { showToast('Fill in name, endpoint and model','error'); return; }
-    const entry = {name,endpoint,key,model};
-    const idx = state.customProviders.findIndex(p=>p.name===name);
-    if (idx>=0) state.customProviders[idx]=entry; else state.customProviders.push(entry);
+    const entry = {name, endpoint, key, model};
+    const editIdx = parseInt(document.getElementById('customFields').dataset.editIdx ?? '-1');
+    if (editIdx >= 0) {
+      state.customProviders[editIdx] = entry;
+    } else {
+      const idx = state.customProviders.findIndex(p=>p.name===name);
+      if (idx>=0) state.customProviders[idx]=entry; else state.customProviders.push(entry);
+    }
     state.provider = 'custom:'+name;
     saveStateToStorage(); updateApiStatus(); renderSavedCustomProviders();
     showToast(name+' provider saved');
-    ['customName','customEndpoint','customKey','customModel'].forEach(id=>document.getElementById(id).value='');
+    customCancelEdit();
   } else {
     const v = document.getElementById('apiKeyInput').value.trim();
     state.keys[state.provider] = v;
@@ -1982,29 +2012,34 @@ function renderSavedCustomProviders() {
   list.innerHTML = '';
   if (!state.customProviders.length) return;
   const lbl = document.createElement('div');
-  lbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;';
+  lbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;';
   lbl.textContent = 'Saved Custom Providers';
   list.appendChild(lbl);
-  state.customProviders.forEach((p,i) => {
-    const isActive = state.provider==='custom:'+p.name;
+  state.customProviders.forEach((p, i) => {
+    const isActive = state.provider === 'custom:' + p.name;
     const row = document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;';
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--bg-card);border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:6px;';
+
+    const label = document.createElement('span');
+    label.style.cssText = 'flex:1;font-size:12px;color:'+(isActive?'var(--accent)':'var(--text-primary)')+';min-width:0;overflow:hidden;';
+    label.innerHTML = escHtml(p.name) + '&nbsp;<span style="color:var(--text-muted);font-family:var(--font-mono);font-size:10px;">' + escHtml(p.model) + '</span>';
+
     const useBtn = document.createElement('button');
     useBtn.textContent = isActive ? 'active' : 'use';
-    useBtn.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);cursor:pointer;background:'+(isActive?'var(--accent)':'var(--bg-hover)')+';color:'+(isActive?'#fff':'var(--text-secondary)')+';';
+    useBtn.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;background:'+(isActive?'var(--accent)':'var(--bg-hover)')+';color:'+(isActive?'#fff':'var(--text-secondary)')+';';
     useBtn.onclick = () => activateCustomProvider(p.name);
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'edit';
+    editBtn.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);cursor:pointer;background:var(--bg-hover);color:var(--text-muted);white-space:nowrap;';
+    editBtn.onclick = () => customStartEdit(i);
+
     const delBtn = document.createElement('button');
     delBtn.textContent = '×';
-    delBtn.style.cssText = 'color:var(--text-muted);background:none;border:none;cursor:pointer;padding:2px 6px;font-size:15px;';
+    delBtn.style.cssText = 'color:var(--text-muted);background:none;border:none;cursor:pointer;padding:2px 5px;font-size:16px;line-height:1;';
     delBtn.onclick = () => removeCustomProvider(i);
-    const label = document.createElement('span');
-    label.style.cssText = 'flex:1;font-size:12px;color:'+(isActive?'var(--accent)':'var(--text-primary)')+';';
-    label.textContent = p.name + ' ';
-    const sub = document.createElement('span');
-    sub.style.cssText = 'color:var(--text-muted);font-family:var(--font-mono);font-size:10px;';
-    sub.textContent = p.model;
-    label.appendChild(sub);
-    row.appendChild(label); row.appendChild(useBtn); row.appendChild(delBtn);
+
+    row.appendChild(label); row.appendChild(useBtn); row.appendChild(editBtn); row.appendChild(delBtn);
     list.appendChild(row);
   });
 }
@@ -2019,6 +2054,122 @@ function removeCustomProvider(i) {
   if (state.provider==='custom:'+name) state.provider='claude';
   saveStateToStorage(); updateApiStatus(); renderSavedCustomProviders();
 }
+// ─── Custom provider model fetch & edit helpers ───────────────────────────────
+let _customModelDropdownMode = false;
+
+async function customFetchModels() {
+  const endpoint = document.getElementById('customEndpoint').value.trim();
+  const key = document.getElementById('customKey').value.trim();
+  const btn = document.getElementById('customFetchModelsBtn');
+  const status = document.getElementById('customModelFetchStatus');
+  if (!endpoint) { showToast('Enter endpoint first', 'error'); return; }
+
+  // Derive the /v1/models URL from the chat completions endpoint
+  let modelsUrl = endpoint.replace(/\/chat\/completions.*$/, '/models').replace(/\/completions.*$/, '/models');
+  if (!modelsUrl.includes('/models')) modelsUrl = endpoint.replace(/\/$/, '') + '/../models';
+
+  btn.textContent = '...'; btn.disabled = true;
+  status.textContent = 'fetching...';
+  status.style.color = 'var(--text-muted)';
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers['Authorization'] = 'Bearer ' + key;
+    const res = await fetch(modelsUrl, { headers });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const models = (data.data || data.models || [])
+      .map(m => m.id || m.name || m)
+      .filter(id => typeof id === 'string' && id.length)
+      .sort();
+    if (!models.length) throw new Error('No models returned');
+
+    const sel = document.getElementById('customModelSelect');
+    const txt = document.getElementById('customModel');
+    const toggleWrap = document.getElementById('customModelToggleWrap');
+    sel.innerHTML = models.map(id => `<option value="${id}">${id}</option>`).join('');
+    // Pre-select current value if editing
+    const curVal = txt.value.trim();
+    if (curVal && models.includes(curVal)) sel.value = curVal;
+    sel.style.display = 'block';
+    txt.style.display = 'none';
+    toggleWrap.style.display = 'inline';
+    _customModelDropdownMode = true;
+    status.textContent = models.length + ' models found';
+    status.style.color = 'var(--success)';
+    btn.textContent = '✓ fetched';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = '↻ Fetch models'; btn.style.color = ''; btn.disabled = false; }, 2000);
+  } catch(e) {
+    status.textContent = 'Could not fetch — type model name manually';
+    status.style.color = 'var(--accent-2)';
+    btn.textContent = '↻ Fetch models'; btn.disabled = false;
+    showToast('Model fetch failed: ' + e.message, 'error');
+  }
+}
+
+// Auto-trigger fetch when endpoint+key are both filled in (onblur)
+function customTryFetchModels() {
+  const ep = document.getElementById('customEndpoint').value.trim();
+  const k  = document.getElementById('customKey').value.trim();
+  if (ep && (k || ep.includes('localhost') || ep.includes('127.0.0.1'))) {
+    customFetchModels();
+  }
+}
+
+function customToggleModelInput() {
+  const sel = document.getElementById('customModelSelect');
+  const txt = document.getElementById('customModel');
+  const btn = document.getElementById('customModelToggleBtn');
+  _customModelDropdownMode = !_customModelDropdownMode;
+  if (_customModelDropdownMode) {
+    sel.style.display = 'block'; txt.style.display = 'none'; btn.textContent = 'type manually';
+  } else {
+    sel.style.display = 'none'; txt.style.display = 'block'; btn.textContent = 'use list'; txt.focus();
+  }
+}
+
+function customStartEdit(idx) {
+  const p = state.customProviders[idx];
+  if (!p) return;
+  // Populate fields
+  document.getElementById('customName').value = p.name;
+  document.getElementById('customEndpoint').value = p.endpoint;
+  document.getElementById('customKey').value = p.key || '';
+  document.getElementById('customModel').value = p.model;
+  // Reset model dropdown
+  const sel = document.getElementById('customModelSelect');
+  sel.style.display = 'none';
+  document.getElementById('customModel').style.display = 'block';
+  document.getElementById('customModelToggleWrap').style.display = 'none';
+  _customModelDropdownMode = false;
+  // Show edit banner
+  const banner = document.getElementById('customEditBanner');
+  banner.style.display = 'flex';
+  // Store which index is being edited
+  document.getElementById('customFields').dataset.editIdx = idx;
+  // Switch to custom tab if not already shown
+  selectProvider('custom');
+  // Scroll modal to top
+  document.querySelector('.modal-box')?.scrollTo(0,0);
+  showToast('Editing ' + p.name + ' — make changes then Save');
+}
+
+function customCancelEdit() {
+  document.getElementById('customFields').dataset.editIdx = '-1';
+  const banner = document.getElementById('customEditBanner');
+  banner.style.display = 'none';
+  ['customName','customEndpoint','customModel'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('customKey').value = '';
+  const sel = document.getElementById('customModelSelect');
+  sel.style.display = 'none';
+  document.getElementById('customModel').style.display = 'block';
+  document.getElementById('customModelToggleWrap').style.display = 'none';
+  document.getElementById('customModelFetchStatus').textContent = '';
+  _customModelDropdownMode = false;
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
 function updateApiStatus() {
   const el = document.getElementById('apiKeyStatus');
   if (state.provider && state.provider.startsWith('custom:')) {
