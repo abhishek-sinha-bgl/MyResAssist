@@ -2064,47 +2064,65 @@ async function customFetchModels() {
   const status = document.getElementById('customModelFetchStatus');
   if (!endpoint) { showToast('Enter endpoint first', 'error'); return; }
 
-  // Derive the /v1/models URL from the chat completions endpoint
-  let modelsUrl = endpoint.replace(/\/chat\/completions.*$/, '/models').replace(/\/completions.*$/, '/models');
-  if (!modelsUrl.includes('/models')) modelsUrl = endpoint.replace(/\/$/, '') + '/../models';
+  // Derive models URL: strip from /chat/completions or /completions back to base,
+  // then append /models. Handles paths like /openai/v1/chat/completions → /openai/v1/models
+  let modelsUrl = endpoint
+    .replace(/\/chat\/completions\/?.*$/, '/models')
+    .replace(/\/completions\/?.*$/, '/models');
+  // If no substitution happened, just replace last path segment
+  if (modelsUrl === endpoint) {
+    modelsUrl = endpoint.replace(/\/[^/]*\/?$/, '/models');
+  }
 
   btn.textContent = '...'; btn.disabled = true;
-  status.textContent = 'fetching...';
+  status.textContent = 'Fetching...';
   status.style.color = 'var(--text-muted)';
 
   try {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {};
     if (key) headers['Authorization'] = 'Bearer ' + key;
-    const res = await fetch(modelsUrl, { headers });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // Note: omit Content-Type on GET to avoid triggering CORS preflight
+    const res = await fetch(modelsUrl, { method: 'GET', headers });
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Invalid API key (401)');
+      if (res.status === 403) throw new Error('Access denied (403) — check key permissions');
+      if (res.status === 404) throw new Error('Models endpoint not found (404) — provider may not support listing');
+      throw new Error('HTTP ' + res.status);
+    }
     const data = await res.json();
     const models = (data.data || data.models || [])
       .map(m => m.id || m.name || m)
       .filter(id => typeof id === 'string' && id.length)
       .sort();
-    if (!models.length) throw new Error('No models returned');
+    if (!models.length) throw new Error('No models returned by provider');
 
     const sel = document.getElementById('customModelSelect');
     const txt = document.getElementById('customModel');
     const toggleWrap = document.getElementById('customModelToggleWrap');
     sel.innerHTML = models.map(id => `<option value="${id}">${id}</option>`).join('');
-    // Pre-select current value if editing
     const curVal = txt.value.trim();
     if (curVal && models.includes(curVal)) sel.value = curVal;
     sel.style.display = 'block';
     txt.style.display = 'none';
     toggleWrap.style.display = 'inline';
     _customModelDropdownMode = true;
-    status.textContent = models.length + ' models found';
+    status.textContent = models.length + ' models';
     status.style.color = 'var(--success)';
-    btn.textContent = '✓ fetched';
+    btn.textContent = '\u2713 fetched';
     btn.style.color = 'var(--success)';
-    setTimeout(() => { btn.textContent = '↻ Fetch models'; btn.style.color = ''; btn.disabled = false; }, 2000);
+    setTimeout(() => { btn.textContent = '\u21bb Fetch models'; btn.style.color = ''; btn.disabled = false; }, 2000);
   } catch(e) {
-    status.textContent = 'Could not fetch — type model name manually';
-    status.style.color = 'var(--accent-2)';
-    btn.textContent = '↻ Fetch models'; btn.disabled = false;
-    showToast('Model fetch failed: ' + e.message, 'error');
+    btn.textContent = '\u21bb Fetch models'; btn.disabled = false;
+    // TypeError = network failure / CORS block
+    if (e instanceof TypeError) {
+      status.textContent = 'Network blocked — type model name manually';
+      status.style.color = 'var(--accent-2)';
+      showToast('CORS or network error — enter model name manually', 'error');
+    } else {
+      status.textContent = e.message + ' — type manually';
+      status.style.color = 'var(--accent-2)';
+      showToast('Model fetch: ' + e.message, 'error');
+    }
   }
 }
 
@@ -2431,22 +2449,37 @@ async function callCustomOpenAI(messages, cp) {
   const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if (mobile) {
-    // Non-streaming path: simpler fetch, wider CORS compatibility
+    // Mobile: non-streaming to avoid ReadableStream CORS issues.
+    // Authorization header triggers a CORS preflight — this is fine IF the
+    // provider sends back Access-Control-Allow-Origin. Groq, Mistral, Together AI
+    // all do. If the fetch still fails here it is a network error (e.g. hotel WiFi
+    // blocking unknown HTTPS destinations) not a code bug.
     createStreamingBubble();
     hideThinking();
-    const res = await fetch(cp.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cp.key },
-      body: JSON.stringify({
-        model: cp.model,
-        messages: [{ role: 'system', content: buildSystemPrompt() }, ...messages],
-        max_tokens: 2048,
-        stream: false,
-      }),
-    });
+    let res;
+    try {
+      res = await fetch(cp.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cp.key },
+        body: JSON.stringify({
+          model: cp.model,
+          messages: [{ role: 'system', content: buildSystemPrompt() }, ...messages],
+          max_tokens: 2048,
+          // omit stream key entirely — some providers reject stream:false
+        }),
+      });
+    } catch(networkErr) {
+      // TypeError means CORS preflight failed or no network
+      throw new Error(
+        'Network error reaching ' + cp.name + '. ' +
+        'Check: (1) your API key is valid, (2) the endpoint URL is correct — ' +
+        'Groq should be https://api.groq.com/openai/v1/chat/completions, ' +
+        '(3) you have mobile data or WiFi. Error: ' + networkErr.message
+      );
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || cp.name + ' error ' + res.status);
+      throw new Error(err.error?.message || cp.name + ' HTTP ' + res.status);
     }
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || '';
@@ -3541,7 +3574,8 @@ async function mSendMessage(){
     updateTakeaways(q,replyText).then(function(){mRenderTakeawaysSheet();});
   }catch(err){
     mHideThinking();var mS=document.getElementById('mStreamBubble');if(mS)mS.remove();
-    mAppendAiBubble('<p style="color:var(--accent-2)">&#9888; '+escHtml(err.message)+'</p>',[],false);
+    var errMsg=err.message||'Unknown error';
+    mAppendAiBubble('<p style="color:var(--accent-2);font-size:13px;line-height:1.6">&#9888; <strong>Error:</strong> '+escHtml(errMsg)+'</p>',[],false);
   }finally{mSetLoading(false);}
 }
 var _origRenderFollowUps=window.renderFollowUps;
