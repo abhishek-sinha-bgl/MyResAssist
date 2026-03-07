@@ -1,188 +1,123 @@
-# 🧠 MyResAssist
+# MyResAssist
 
-A personal AI research assistant that runs entirely in your browser — on desktop or mobile. No backend, no server, no subscriptions — just bring your own API key and start researching.
+**Research intelligence. Knowledge that accumulates.**
 
-**[Live Demo →](https://abhishek-sinha-bgl.github.io/MyResAssist/)**
-
-![MyResAssist Screenshot](screenshot.png)
+[Live Demo](https://abhishek-sinha-bgl.github.io/MyResAssist/) · Single HTML file · No backend · No build tools · BYOK
 
 ---
 
-## What it does
+## What it is
 
-MyResAssist helps you research topics deeply and retain what matters. Chat with an AI that searches the web in real time, automatically extracts key takeaways, suggests follow-up questions, and flags when new findings contradict earlier ones. Works seamlessly on both desktop and mobile browsers — the layout adapts automatically.
+MyResAssist is a personal research assistant that treats knowledge as something worth keeping. Unlike a chat interface where conversations disappear, MyResAssist extracts claims from every response, lets you absorb them into a persistent knowledge base, and surfaces contradictions automatically as your understanding of a topic deepens.
 
-**Core features:**
-
-- **Live web search** — responses grounded in current information, not just training data
-- **Streaming responses** — see answers appear token by token, no waiting
-- **Key Takeaways** — auto-extracted after every response, always showing the top 5, with confidence ratings (High / Medium / Low) and contradiction detection
-- **Follow-up chips** — 3 suggested next questions appear after each response, tap to use
-- **Citations** — inline superscript links with a sources bar showing titles and domains
-- **Research Deeper** — structured multi-angle report covering findings, perspectives, evidence, and implications; activates after your first query
-- **Generate Summary** — produces a crisp summary (max 500 words + top 5 takeaways) of the full session at any point; shareable directly to WhatsApp, Email, Obsidian, NotebookLM and more
-- **Session persistence** — all conversations saved locally in your browser, switchable from the sessions panel
-- **Pinned Topics** — scope any session to a domain (Geopolitical, Technology, Regulatory, etc.) to keep responses focused
-- **Voice input** — speak your research question on mobile; transcribed and sent automatically
-- **Export** — save as Markdown, Obsidian note (with YAML frontmatter), plain text for NotebookLM, or copy to clipboard
+The unit of value is a **claim**, not a message.
 
 ---
 
-## Mobile & Desktop
+## How it works
 
-MyResAssist detects your device automatically when you open it and serves the appropriate layout — no separate URL or app install needed.
+**The Research Wall** is your home screen — a grid of topics you're actively researching, each showing its strongest finding, an average confidence level, and a flag if any claims contradict each other.
 
-**Desktop** — three-panel layout: sessions and pinned topics on the left, chat in the centre, key takeaways on the right.
+**Inside a topic**, your extracted knowledge lives on the left as a list of claims with confidence levels (high / medium / low) and contradiction markers. The research chat is on the right — a tool you reach for to add more.
 
-**Mobile** — single-screen layout optimised for touch:
-- Horizontally scrollable topic pills at the top
-- Full-screen chat with native-feeling bubbles
-- Action bar with Research Deeper, Summary, Takeaways, Save, and Obsidian buttons
-- Mic button for voice input using the device's speech recognition
-- Takeaways and Sessions open as slide-up bottom sheets
-- Summary share sheet triggers the system share dialog (WhatsApp, Gmail, Messages, etc.) or downloads formatted files for Obsidian and NotebookLM
+**After every AI response**, MyResAssist automatically extracts 2–4 key claims and presents them in an absorb panel. You choose which ones are worth keeping, and they're filed into your topic with sources attached. If a new claim contradicts something you already know, it's flagged immediately.
 
 ---
 
-## Supported AI Providers
+## Features
 
-MyResAssist uses a **Bring Your Own Key (BYOK)** model. Your key is stored only in your browser's `localStorage` and sent directly to the provider — nothing passes through any server.
+### Knowledge base
+- Claims persist across sessions — your research wall grows over time
+- Automatic confidence ratings (high / medium / low) on every extracted claim
+- Contradiction detection — new claims are checked against your existing knowledge
+- Filter claims by confidence level or contradictions
+- Edit topic titles in place, delete individual claims
 
-| Provider | Models | Web Search |
-|----------|--------|------------|
-| **Anthropic Claude** | Sonnet 4, Opus 4.5, Haiku 4.5, and more | ✅ Native (web_search tool) |
-| **OpenAI** | GPT-4o, GPT-4o Mini, o1, o3-mini, and more | Extracts URLs from responses |
-| **Google Gemini** | 2.0 Flash, 1.5 Flash, 1.5 Pro, 2.5 previews | ✅ Native (Google Search grounding) |
-| **Custom (OpenAI-compatible)** | Any model — Groq, Mistral, Together AI, Ollama, LM Studio | Depends on provider |
+### Research
+- Full streaming responses from Claude, OpenAI, Gemini, or any OpenAI-compatible provider
+- Web search toggle — live results via Anthropic (Claude), Google (Gemini), or provider default
+- **Research Deeper** — structured multi-angle deep dive: core findings, supporting evidence, counterarguments, implications, and further angles
+- **Summarise** — concise executive brief of the current session against your existing claims
+- Follow-up question suggestions after each response
+- Export topic to Markdown (claims + full conversation)
 
-The model dropdown fetches live models from each provider's API so you always see what's currently available, including newly released models.
+### Themes
+Four built-in themes, switchable live from Settings with no reload required. Your choice persists across sessions.
 
----
+| Theme | Character |
+|---|---|
+| **Parchment** | Warm cream paper, charcoal ink, Lora serif. Editorial and readable — the default. |
+| **Obsidian** | Near-black with electric cyan accents, Outfit typeface. Dark mode with precision energy. |
+| **Slate & Bone** | Cool off-white, blue-grey ink, IBM Plex Mono display. Clinical, architectural, low noise. |
+| **Forest Codex** | Deep forest green, aged gold accents, Crimson Pro italic. The richest and most distinctive. |
 
-## Getting Started
+### Providers
+- Claude (Anthropic) — with web search support
+- OpenAI — with streaming
+- Google Gemini — with Google Search grounding
+- Any OpenAI-compatible provider: Groq, Mistral, Together AI, Ollama, LM Studio, Perplexity
+- Custom providers: live model fetch from `/v1/models`, dropdown selection, edit/update saved providers
 
-### 1. Get an API key
+### Voice
+- Voice input via Web Speech API (Chrome and Safari on Android/iOS)
+- Hands-free: speak your question, response streams automatically
 
-Pick any one provider to start:
-
-- **Gemini (easiest/free tier)** → [aistudio.google.com](https://aistudio.google.com) — sign in with Google, grab a key instantly. Use `gemini-1.5-flash` for the free tier.
-- **Claude** → [console.anthropic.com](https://console.anthropic.com) — pay-as-you-go, ~$5 of free credit on signup
-- **OpenAI** → [platform.openai.com](https://platform.openai.com) — pay-as-you-go
-
-### 2. Open the app
-
-Visit the [live demo](https://abhishek-sinha-bgl.github.io/MyResAssist/), or open `index.html` directly in your browser — it works as a local file too.
-
-### 3. Configure your key
-
-Click the 🔑 button (desktop: bottom-left corner; mobile: top-right). Select your provider, paste your key, choose a model, and click **Save**. Your key is stored in your browser and won't need to be re-entered.
-
-### 4. Start researching
-
-Type a question or speak it (mobile). Toggle **Live Web** for real-time search results. After your first response, Research Deeper, Generate Summary, and all export options become available.
-
----
-
-## Deployment on GitHub Pages
-
-1. Fork or clone this repository
-2. Ensure the file is named `index.html` at the root
-3. Go to **Settings → Pages**
-4. Set source to **Deploy from branch → main → / (root)**
-5. Click **Save** — live in ~60 seconds at `https://yourusername.github.io/reponame`
-
-No build step, no dependencies, no Node.js required.
+### Mobile
+- Responsive layout — claims panel full-screen on mobile
+- Chat opens as a slide-up panel via a floating button
+- Non-streaming API calls on mobile for reliable CORS handling with custom providers
 
 ---
 
-## Using Custom Providers
+## Getting started
 
-Any OpenAI-compatible endpoint works. In the provider config modal, click **+ Custom** and fill in:
+1. Open the [live demo](https://abhishek-sinha-bgl.github.io/MyResAssist/) or host `index.html` anywhere static
+2. Click **Configure API key** in the top bar
+3. Select your provider, enter your API key, choose a model, and save
+4. Optionally pick a theme from the Appearance row at the top of Settings
+5. Create your first research topic from the wall
+6. Ask a question — absorb the findings
 
-| Field | Example |
-|-------|---------|
-| Provider Name | Groq |
-| API Endpoint | `https://api.groq.com/openai/v1/chat/completions` |
-| API Key | your Groq key |
-| Model Name | `llama-3.3-70b-versatile` |
-
-**Popular compatible providers:**
-
-- **Groq** — extremely fast inference, generous free tier → [console.groq.com](https://console.groq.com)
-- **Mistral** → [console.mistral.ai](https://console.mistral.ai)
-- **Together AI** → [api.together.xyz](https://api.together.xyz)
-- **Perplexity** → [perplexity.ai/settings/api](https://www.perplexity.ai/settings/api)
-- **Ollama (local)** → endpoint: `http://localhost:11434/v1/chat/completions`, key: `ollama`
-- **LM Studio (local)** → endpoint: `http://localhost:1234/v1/chat/completions`
+Your API keys and all research data are stored in your browser's localStorage. Nothing leaves your device except the API calls you make directly to your chosen provider.
 
 ---
 
-## Privacy & Security
+## Deployment
 
-- **Your API keys never leave your browser.** Stored in `localStorage` and used only for direct HTTP requests to your chosen provider.
-- **No analytics, no tracking, no ads.** A static HTML file with no external scripts beyond Google Fonts.
-- **No intermediary server.** The app has no backend of any kind.
-- Keys persist in your browser until you clear site data. They do not transfer to other browsers or devices — each needs its own key configured once.
+This is a single `index.html` file. Drop it anywhere that serves static files:
 
----
+- **GitHub Pages** — push to your repo, enable Pages, done
+- **Netlify / Vercel** — drag and drop
+- **Local** — open the file directly in your browser
 
-## Features In Detail
-
-### Pinned Topics
-Activate a pinned topic to scope all responses to that lens — e.g. "Regulatory" biases answers toward regulatory angles. Click again to deactivate. Add custom topics with the **+** button. On mobile, topics appear as a scrollable pill strip at the top of the screen.
-
-### Confidence Indicators
-Each takeaway is rated High / Medium / Low by the AI based on how well-supported the claim is. High means multiple corroborating sources; Low means speculative or single-source claims.
-
-### Contradiction Detection
-When new takeaways are generated, previous ones are passed as context. If a new finding conflicts with an earlier takeaway, the card is highlighted with a note identifying the specific contradiction. Useful for fast-moving stories.
-
-### Research Deeper
-Sends a structured prompt requesting a multi-angle report: overview, key findings with evidence, multiple stakeholder perspectives, specific data points, forward implications, and open questions. Only becomes available after your first query has been answered.
-
-### Generate Summary
-Produces a crisp summary of everything discussed so far — max 500 words plus a numbered Top 5 Takeaways list. On desktop, the summary appears in chat with copy and save-as-markdown options. On mobile, a share sheet offers: system share dialog (WhatsApp, Gmail, Messages, etc.), download for Obsidian (.md with YAML frontmatter), download for NotebookLM (.txt), or copy to clipboard.
-
-### Voice Input (Mobile)
-Tap the microphone button to open the voice modal. Speak your question — interim transcript is shown as you speak. On completion, the transcript fills the input field ready to send. Uses the Web Speech API, supported on Chrome for Android and Safari on iOS.
-
-### Sessions
-All research sessions are saved automatically with a title derived from your first question. Switch between sessions from the sessions panel (desktop left sidebar; mobile bottom sheet) — full conversation history, takeaways, and topic scope are all restored.
-
-### Export Options
-
-| Option | Format | Best for |
-|--------|--------|----------|
-| Save Local | `.md` file download | Personal notes, local Obsidian vault |
-| Obsidian | `.md` with YAML frontmatter | Direct import to Obsidian |
-| NotebookLM | `.txt` download or clipboard | Upload as a source in Google NotebookLM |
-| Markdown | Clipboard copy | Pasting into any markdown editor |
+No server, no database, no accounts.
 
 ---
 
-## Keyboard Shortcuts
+## API key setup
 
-| Key | Action |
-|-----|--------|
-| `Enter` | Send message |
-| `Shift + Enter` | New line in input |
+| Provider | Where to get a key |
+|---|---|
+| Claude | [console.anthropic.com](https://console.anthropic.com) |
+| OpenAI | [platform.openai.com](https://platform.openai.com) |
+| Gemini | [aistudio.google.com](https://aistudio.google.com) |
+| Groq | [console.groq.com](https://console.groq.com) |
+| Mistral | [console.mistral.ai](https://console.mistral.ai) |
 
----
-
-## Roadmap Ideas
-
-- [ ] Multi-step deep research with sequential web searches and synthesis
-- [ ] Document and image analysis (upload PDFs, screenshots, web pages)
-- [ ] Cross-device session sync via GitHub Gist or similar
-- [ ] Search within conversation history
-- [ ] Shareable read-only session links
+For Groq, the correct endpoint is `https://api.groq.com/openai/v1/chat/completions`. After entering the endpoint and key, click **Fetch models** to populate the model dropdown automatically.
 
 ---
 
-## License
+## Roadmap
 
-MIT — do whatever you want with it.
+- Multi-step deep research with sequential independent searches
+- URL and document analysis — paste a link or attach a PDF
+- Cross-device session sync via shareable URL or GitHub Gist
+- Search within your knowledge base across topics
+- Claim relationship mapping — visual connections between supporting and contradicting claims
 
 ---
 
-*Built as a single HTML file. No frameworks, no build tools, no dependencies. Works on desktop and mobile browsers straight from GitHub Pages.*
+## Built with
+
+No frameworks, no bundler, no dependencies. Fonts via Google Fonts: Lora and Source Sans 3 (Parchment), Outfit and IBM Plex Mono (Obsidian), IBM Plex Mono (Slate), Crimson Pro (Forest). Everything else is vanilla HTML, CSS, and JavaScript.
