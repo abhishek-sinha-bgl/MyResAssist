@@ -215,7 +215,7 @@ body::before{
 ═══════════════════════════════════════════════════ */
 .wall{padding:48px 28px 80px;max-width:1180px;margin:0 auto}
 .wall-hdr{
-  margin-bottom:48px;padding-bottom:16px;
+  margin-bottom:28px;padding-bottom:16px;
   border-bottom:2px solid var(--ink);
   display:flex;align-items:flex-end;justify-content:space-between;
   flex-wrap:wrap;gap:12px;
@@ -225,7 +225,63 @@ body::before{
   letter-spacing:-.5px;line-height:1.1;margin-bottom:5px;
 }
 .wall-hdr-l p{font-family:var(--mono);font-size:11px;color:var(--ink-4);letter-spacing:1px;text-transform:uppercase}
+
+/* ── SEARCH BAR ── */
+.wall-search-wrap{
+  margin-bottom:24px;position:relative;
+}
+.wall-search{
+  width:100%;padding:10px 40px 10px 14px;
+  font-family:var(--sans);font-size:14px;color:var(--ink);
+  background:var(--paper-card);border:1px solid var(--rule);
+  border-radius:var(--rl);outline:none;transition:border-color .18s;
+  box-sizing:border-box;
+}
+.wall-search::placeholder{color:var(--ink-5)}
+.wall-search:focus{border-color:var(--ink-4)}
+.wall-search-clear{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:var(--ink-4);
+  font-size:14px;display:none;padding:2px 4px;
+}
+.wall-search-clear.on{display:block}
+.wall-search-clear:hover{color:var(--ink)}
+/* search results */
+.search-group{margin-bottom:20px}
+.search-group-hdr{
+  font-family:var(--mono);font-size:10px;color:var(--ink-4);
+  letter-spacing:.8px;text-transform:uppercase;
+  padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--rule-light);
+  display:flex;align-items:center;gap:8px;
+}
+.search-hit{
+  padding:10px 14px;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--paper-card);cursor:pointer;margin-bottom:7px;
+  transition:all .18s;display:flex;flex-direction:column;gap:3px;
+}
+.search-hit:hover{border-color:var(--cobalt);background:var(--cobalt-pale)}
+.search-hit-text{font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.search-hit-text mark{background:rgba(180,83,9,.18);color:var(--ink);border-radius:2px;padding:0 2px}
+.search-hit-meta{font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+.search-empty{font-family:var(--mono);font-size:12px;color:var(--ink-4);text-align:center;padding:32px 0}
+
 .wall-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+
+/* ── ARCHIVED SECTION ── */
+.archived-section{margin-top:32px}
+.archived-hdr{
+  font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.8px;
+  text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px;
+  padding:10px 0;border-top:1px solid var(--rule-light);user-select:none;
+  transition:color .18s;
+}
+.archived-hdr:hover{color:var(--ink-3)}
+.archived-hdr .arc-caret{transition:transform .2s;display:inline-block}
+.archived-open .arc-caret{transform:rotate(90deg)}
+.archived-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:14px}
+.archived-open .archived-grid{display:grid}
+.tc-archived{opacity:0.55;filter:grayscale(0.4)}
+.tc-archived:hover{opacity:0.85;filter:grayscale(0)}
 
 /* topic card */
 .tc{
@@ -236,6 +292,69 @@ body::before{
   display:flex;flex-direction:column;gap:12px;
 }
 .tc::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--tc-color,var(--cobalt))}
+.tc:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.tc-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.tc-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:-.2px}
+.tc-when{font-family:var(--mono);font-size:10px;color:var(--ink-5);white-space:nowrap;padding-top:2px}
+.tc-lead{font-size:14px;color:var(--ink-2);line-height:1.65;font-style:italic}
+.tc-foot{
+  display:flex;align-items:center;gap:10px;
+  padding-top:12px;border-top:1px solid var(--rule-light);margin-top:auto;
+}
+.tc-stat{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.conf-track{flex:1;height:2px;background:var(--rule);border-radius:1px;overflow:hidden}
+.conf-fill{height:100%;border-radius:1px;transition:width .4s ease}
+.contra-badge{font-family:var(--mono);font-size:10px;color:var(--vermillion);display:flex;align-items:center;gap:3px}
+
+/* ── TOPIC CARD MENU ── */
+.tc-menu-btn{
+  position:absolute;top:10px;right:10px;z-index:2;
+  width:26px;height:26px;border-radius:var(--r);
+  background:var(--paper-card);border:1px solid var(--rule);
+  cursor:pointer;color:var(--ink-4);font-size:14px;
+  display:none;align-items:center;justify-content:center;
+  transition:all .18s;line-height:1;
+}
+.tc:hover .tc-menu-btn{display:flex}
+.tc-menu-btn:hover{color:var(--ink);border-color:var(--ink-4)}
+.tc-menu{
+  position:absolute;top:38px;right:10px;z-index:10;
+  background:var(--paper-card);border:1px solid var(--rule);
+  border-radius:var(--r);box-shadow:var(--shadow-lg);
+  min-width:130px;overflow:hidden;display:none;
+}
+.tc-menu.on{display:block}
+.tc-menu-item{
+  display:block;width:100%;text-align:left;padding:9px 14px;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  background:none;border:none;cursor:pointer;transition:background .15s;
+  letter-spacing:.3px;
+}
+.tc-menu-item:hover{background:var(--paper-deep);color:var(--ink)}
+.tc-menu-item.del:hover{color:var(--vermillion)}
+
+/* new topic */
+.tc-new{border-style:dashed;border-color:var(--rule);background:transparent;
+  box-shadow:none;align-items:center;justify-content:center;min-height:160px;gap:8px}
+.tc-new::before{display:none}
+.tc-new:hover{background:var(--paper-deep);border-color:var(--ink-4);transform:none;box-shadow:none}
+.tc-new-icon{font-size:26px;color:var(--ink-5)}
+.tc-new-lbl{font-family:var(--mono);font-size:11px;color:var(--ink-4);letter-spacing:1px;text-transform:uppercase}
+
+/* ── DATA / EXPORT section in settings ── */
+.data-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.data-btn{
+  font-family:var(--mono);font-size:11px;padding:7px 14px;
+  border-radius:var(--r);cursor:pointer;transition:all .18s;letter-spacing:.3px;
+}
+.data-btn.export{
+  background:var(--paper-deep);border:1px solid var(--rule);color:var(--ink-3);
+}
+.data-btn.export:hover{border-color:var(--ink-3);color:var(--ink)}
+.data-btn.import{
+  background:var(--cobalt-pale);border:1px solid rgba(37,99,168,.3);color:var(--cobalt);
+}
+.data-btn.import:hover{background:var(--cobalt);color:var(--paper)}
 .tc:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .tc-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .tc-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--ink);line-height:1.3;letter-spacing:-.2px}
@@ -862,8 +981,22 @@ select.fi{cursor:pointer}
       </div>
       <button class="tb-btn pri" onclick="newTopic()">+ New Topic</button>
     </div>
-    <div class="wall-grid stagger" id="wallGrid">
-      <!-- populated by JS -->
+    <div class="wall-search-wrap">
+      <input class="wall-search" id="wallSearch" placeholder="Search topics and claims…" oninput="handleWallSearch(this.value)" autocomplete="off">
+      <button class="wall-search-clear" id="wallSearchClear" onclick="clearWallSearch()">✕</button>
+    </div>
+    <div id="searchResults" style="display:none"></div>
+    <div id="wallGridWrap">
+      <div class="wall-grid stagger" id="wallGrid">
+        <!-- populated by JS -->
+      </div>
+      <div class="archived-section" id="archivedSection" style="display:none">
+        <div class="archived-hdr" onclick="toggleArchived(this)">
+          <span class="arc-caret">▶</span>
+          <span id="archivedLabel">Archived (0)</span>
+        </div>
+        <div class="archived-grid" id="archivedGrid"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1088,6 +1221,16 @@ select.fi{cursor:pointer}
         <button class="mbtn c" onclick="closeSettings()">Cancel</button>
         <button class="mbtn s" onclick="saveSettings()">Save</button>
       </div>
+      <!-- Data section -->
+      <div class="field" style="border-top:1px solid var(--rule-light);padding-top:18px;margin-top:4px;">
+        <label>Data</label>
+        <div class="data-row">
+          <button class="data-btn export" onclick="exportData()">↓ Export backup</button>
+          <button class="data-btn import" onclick="document.getElementById('importFile').click()">↑ Import backup</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+        </div>
+        <div class="fi-hint" style="margin-top:8px">Export saves all topics, claims, and settings as a JSON file. Import merges into your existing data.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1128,6 +1271,7 @@ const COLOR_NAMES = ['Cobalt','Forest','Amber','Vermillion','Violet','Teal','Ros
 
 let state = {
   topics: [],
+  archivedTopicIds: [],
   activeTopicId: null,
   provider: 'claude',
   keys: { claude:'', openai:'', gemini:'' },
@@ -1150,7 +1294,7 @@ function save() {
     topics: state.topics, provider: state.provider,
     keys: state.keys, models: state.models,
     customProviders: state.customProviders, webSearch: state.webSearch,
-    theme: state.theme,
+    theme: state.theme, archivedTopicIds: state.archivedTopicIds,
   })); } catch(e){}
 }
 function load() {
@@ -1163,6 +1307,7 @@ function load() {
     if (d.customProviders) state.customProviders = d.customProviders;
     if (d.webSearch !== undefined) state.webSearch = d.webSearch;
     if (d.theme) state.theme = d.theme;
+    if (d.archivedTopicIds) state.archivedTopicIds = d.archivedTopicIds;
   } catch(e){}
 }
 
@@ -1238,43 +1383,176 @@ function getTopic(id) {
 // ═══════════════════════════════════════════════════════════
 function renderWall() {
   const grid = document.getElementById('wallGrid');
-  grid.innerHTML = '';
-
-  // new topic card
+  const archivedGrid = document.getElementById('archivedGrid');
+  grid.innerHTML = ''; archivedGrid.innerHTML = '';
   const ntc = document.createElement('div');
-  ntc.className = 'tc tc-new';
-  ntc.onclick = newTopic;
-  ntc.innerHTML = `<div class="tc-new-icon">+</div><div class="tc-new-lbl">New Research Topic</div>`;
+  ntc.className = 'tc tc-new'; ntc.onclick = newTopic;
+  ntc.innerHTML = '<div class="tc-new-icon">+</div><div class="tc-new-lbl">New Research Topic</div>';
   grid.appendChild(ntc);
-
-  // topic cards (newest first)
-  [...state.topics].reverse().forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'tc fi-anim';
-    card.style.setProperty('--tc-color', t.color || COLORS[0]);
-    const claims = t.claims || [];
-    const avgConf = claims.length ? claims.reduce((s,c) => s + (c.confidence||0.5), 0) / claims.length : 0;
-    const contraCount = claims.filter(c => c.contradicts).length;
-    const topClaim = claims.find(c => (c.confidence||0) >= 0.7) || claims[0];
-    const fillColor = avgConf > 0.66 ? 'var(--forest)' : avgConf > 0.4 ? 'var(--amber)' : 'var(--slate)';
-
-    card.innerHTML = `
-      <div class="tc-hdr">
-        <div class="tc-title">${esc(t.title)}</div>
-        <div class="tc-when">${reltime(t.updatedAt||t.createdAt)}</div>
-      </div>
-      ${topClaim ? `<div class="tc-lead">"${esc(topClaim.text.substring(0,120))}${topClaim.text.length>120?'…':''}"</div>` : `<div class="tc-lead" style="color:var(--ink-5)">No claims yet. Open to start researching.</div>`}
-      <div class="tc-foot">
-        <div class="tc-stat">${claims.length} claim${claims.length!==1?'s':''}</div>
-        <div class="conf-track"><div class="conf-fill" style="width:${avgConf*100}%;background:${fillColor}"></div></div>
-        ${contraCount ? `<div class="contra-badge">⚠ ${contraCount}</div>` : ''}
-      </div>
-    `;
-    card.onclick = () => showTopic(t.id);
-    grid.appendChild(card);
-  });
+  const active = [...state.topics].reverse().filter(t => !state.archivedTopicIds.includes(t.id));
+  const archived = [...state.topics].reverse().filter(t => state.archivedTopicIds.includes(t.id));
+  active.forEach(t => grid.appendChild(buildTopicCard(t, false)));
+  archived.forEach(t => archivedGrid.appendChild(buildTopicCard(t, true)));
+  const arcSection = document.getElementById('archivedSection');
+  const arcLabel = document.getElementById('archivedLabel');
+  if (archived.length) { arcSection.style.display = ''; arcLabel.textContent = 'Archived (' + archived.length + ')'; }
+  else arcSection.style.display = 'none';
   updateKeyStatus();
 }
+
+function buildTopicCard(t, isArchived) {
+  const card = document.createElement('div');
+  card.className = 'tc fi-anim' + (isArchived ? ' tc-archived' : '');
+  card.style.setProperty('--tc-color', t.color || COLORS[0]);
+  const claims = t.claims || [];
+  const avgConf = claims.length ? claims.reduce((s,c) => s + (c.confidence||0.5), 0) / claims.length : 0;
+  const contraCount = claims.filter(c => c.contradicts).length;
+  const topClaim = claims.find(c => (c.confidence||0) >= 0.7) || claims[0];
+  const fillColor = avgConf > 0.66 ? 'var(--forest)' : avgConf > 0.4 ? 'var(--amber)' : 'var(--slate)';
+  card.innerHTML = `
+    <button class="tc-menu-btn" title="Options">⋯</button>
+    <div class="tc-menu" id="menu-${t.id}">
+      ${isArchived
+        ? `<button class="tc-menu-item" onclick="unarchiveTopic('${t.id}',event)">↑ Restore</button>`
+        : `<button class="tc-menu-item" onclick="archiveTopic('${t.id}',event)">↓ Archive</button>`}
+      <button class="tc-menu-item del" onclick="confirmDeleteTopic('${t.id}',event)">✕ Delete</button>
+    </div>
+    <div class="tc-hdr">
+      <div class="tc-title">${esc(t.title)}</div>
+      <div class="tc-when">${reltime(t.updatedAt||t.createdAt)}</div>
+    </div>
+    ${topClaim ? `<div class="tc-lead">“${esc(topClaim.text.substring(0,120))}${topClaim.text.length>120?'…':''}”</div>` : `<div class="tc-lead" style="color:var(--ink-5)">No claims yet. Open to start researching.</div>`}
+    <div class="tc-foot">
+      <div class="tc-stat">${claims.length} claim${claims.length!==1?'s':''}</div>
+      <div class="conf-track"><div class="conf-fill" style="width:${avgConf*100}%;background:${fillColor}"></div></div>
+      ${contraCount ? `<div class="contra-badge">⚠ ${contraCount}</div>` : ''}
+    </div>
+  `;
+  const menuBtn = card.querySelector('.tc-menu-btn');
+  const menu = card.querySelector('.tc-menu');
+  menuBtn.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.tc-menu.on').forEach(m => { if (m !== menu) m.classList.remove('on'); });
+    menu.classList.toggle('on');
+  };
+  card.onclick = (e) => {
+    if (menu.classList.contains('on')) { menu.classList.remove('on'); return; }
+    if (e.target.closest('.tc-menu-btn') || e.target.closest('.tc-menu')) return;
+    showTopic(t.id);
+  };
+  return card;
+}
+
+document.addEventListener('click', () => document.querySelectorAll('.tc-menu.on').forEach(m => m.classList.remove('on')));
+
+function archiveTopic(id, e) {
+  e.stopPropagation();
+  if (!state.archivedTopicIds.includes(id)) state.archivedTopicIds.push(id);
+  save(); renderWall(); toast('Topic archived');
+}
+function unarchiveTopic(id, e) {
+  e.stopPropagation();
+  state.archivedTopicIds = state.archivedTopicIds.filter(i => i !== id);
+  save(); renderWall(); toast('Topic restored');
+}
+function confirmDeleteTopic(id, e) {
+  e.stopPropagation();
+  document.querySelectorAll('.tc-menu.on').forEach(m => m.classList.remove('on'));
+  const t = state.topics.find(t => t.id === id);
+  if (!t) return;
+  const stash = { topic: JSON.parse(JSON.stringify(t)), wasArchived: state.archivedTopicIds.includes(id) };
+  state.topics = state.topics.filter(x => x.id !== id);
+  state.archivedTopicIds = state.archivedTopicIds.filter(i => i !== id);
+  save(); renderWall();
+  let undone = false;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12px;padding:10px 16px;border-radius:var(--rl);box-shadow:var(--shadow-lg);white-space:nowrap;';
+  const titleEsc = t.title.substring(0,28).replace(/</g,'&lt;');
+  wrap.innerHTML = `<span>“${titleEsc}” deleted</span><button style="background:none;border:none;color:var(--cobalt);cursor:pointer;font-family:var(--mono);font-size:12px;padding:0;font-weight:600;margin-left:4px;">Undo</button>`;
+  wrap.querySelector('button').onclick = () => {
+    undone = true; wrap.remove();
+    state.topics.push(stash.topic);
+    if (stash.wasArchived) state.archivedTopicIds.push(stash.topic.id);
+    save(); renderWall(); toast('Deletion undone');
+  };
+  document.body.appendChild(wrap);
+  setTimeout(() => { if (!undone) wrap.remove(); }, 6000);
+}
+function toggleArchived(el) { el.closest('.archived-section').classList.toggle('archived-open'); }
+
+// WALL SEARCH
+let _searchDebounce = null;
+function handleWallSearch(q) {
+  document.getElementById('wallSearchClear').classList.toggle('on', q.length > 0);
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(() => runWallSearch(q.trim()), 160);
+}
+function clearWallSearch() {
+  document.getElementById('wallSearch').value = '';
+  document.getElementById('wallSearchClear').classList.remove('on');
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('wallGridWrap').style.display = '';
+}
+function runWallSearch(q) {
+  const resultsEl = document.getElementById('searchResults');
+  const gridWrap = document.getElementById('wallGridWrap');
+  if (!q) { resultsEl.style.display = 'none'; gridWrap.style.display = ''; return; }
+  const lq = q.toLowerCase();
+  resultsEl.style.display = ''; gridWrap.style.display = 'none'; resultsEl.innerHTML = '';
+  function hl(text) {
+    return esc(text).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+  }
+  let total = 0;
+  state.topics.forEach(t => {
+    const hits = [];
+    if (t.title.toLowerCase().includes(lq)) hits.push({ text: t.title, meta: 'Topic · '+(t.claims||[]).length+' claims' });
+    (t.claims||[]).forEach(c => {
+      if (c.text.toLowerCase().includes(lq)) hits.push({ text: c.text, meta: ((c.confidence||0)>=0.7?'High':(c.confidence||0)>=0.35?'Medium':'Low')+' confidence claim' });
+      else if ((c.why||'').toLowerCase().includes(lq)) hits.push({ text: c.why, meta: 'Claim rationale' });
+    });
+    if (!hits.length) return;
+    total += hits.length;
+    const group = document.createElement('div');
+    group.className = 'search-group';
+    group.innerHTML = `<div class="search-group-hdr"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${t.color||COLORS[0]};flex-shrink:0"></span>${esc(t.title)}<span style="color:var(--ink-5)">${hits.length} match${hits.length!==1?'es':''}</span></div>`;
+    hits.slice(0,5).forEach(h => {
+      const row = document.createElement('div');
+      row.className = 'search-hit';
+      row.innerHTML = `<div class="search-hit-text">${hl(h.text.substring(0,180))}${h.text.length>180?'…':''}</div><div class="search-hit-meta">${esc(h.meta)}</div>`;
+      row.onclick = () => { clearWallSearch(); showTopic(t.id); };
+      group.appendChild(row);
+    });
+    resultsEl.appendChild(group);
+  });
+  if (!total) resultsEl.innerHTML = `<div class="search-empty">No matches for “${esc(q)}”</div>`;
+}
+
+// EXPORT / IMPORT
+function exportData() {
+  const blob = new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),topics:state.topics,archivedTopicIds:state.archivedTopicIds},null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'myresassist-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href); toast('Backup exported');
+}
+function importData(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (!d.topics || !Array.isArray(d.topics)) throw new Error('Invalid');
+      const existing = new Set(state.topics.map(t=>t.id));
+      let added = 0;
+      d.topics.forEach(t => { if (!existing.has(t.id)) { state.topics.push(t); added++; } });
+      if (d.archivedTopicIds) d.archivedTopicIds.forEach(id => { if (!state.archivedTopicIds.includes(id)) state.archivedTopicIds.push(id); });
+      save(); renderWall(); toast('Imported '+added+' new topic'+(added!==1?'s':''));
+    } catch(err) { toast('Import failed — invalid file','err'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // TOPIC — CLAIMS
