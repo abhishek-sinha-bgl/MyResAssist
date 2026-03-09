@@ -1854,19 +1854,27 @@ Write a concise research digest in two parts. Return ONLY valid JSON:
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${state.models.gemini||'gemini-2.0-flash'}:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{role:'user',parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:400} }) });
       const d = await r.json(); raw = d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
     }
-    const parsed = parseClaimsFromRaw(raw);
+      // Parse the summary object directly — don't use parseClaimsFromRaw (designed for claims arrays)
+    const raw2 = raw.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    let parsed = null;
+    try {
+      const oi = raw2.indexOf('{');
+      parsed = JSON.parse(oi >= 0 ? raw2.substring(oi) : raw2);
+    } catch(e) {}
     if (parsed && parsed.overview) {
       t._kpSummary = { overview: parsed.overview, gaps: parsed.gaps||'' };
-      // Re-render only the summary block, don't full re-render
+      // Re-render summary block in-place without full re-render
       if (state.currentFilter === 'kp') {
         const gen = document.getElementById('kpGenerating');
         if (gen) {
           const block = gen.closest('.kp-summary');
-          if (block) block.outerHTML = `<div class="kp-summary">
-            <div class="kp-summary-label">Research digest</div>
-            <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
-            ${t._kpSummary.gaps ? `<div class="kp-summary-gaps"><div class="kp-gaps-label">Research gaps</div><div class="kp-gaps-text">${esc(t._kpSummary.gaps)}</div></div>` : ''}
-          </div>`;
+          if (block) {
+            block.innerHTML = `
+              <div class="kp-summary-label">Research digest</div>
+              <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
+              ${t._kpSummary.gaps ? `<div class="kp-summary-gaps"><div class="kp-gaps-label">Research gaps</div><div class="kp-gaps-text">${esc(t._kpSummary.gaps)}</div></div>` : ''}
+            `;
+          }
         }
       }
     }
