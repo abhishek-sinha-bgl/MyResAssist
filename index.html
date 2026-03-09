@@ -698,7 +698,95 @@ body::before{
   font-size:17px;display:flex;align-items:center;justify-content:center;
   transition:all .18s;
 }
-.ci-voice:hover{border-color:var(--ink-4);background:var(--paper-card)}
+/* ── SORT TOGGLE ── */
+.sort-toggle{
+  margin-left:auto;display:flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10px;color:var(--ink-4);
+}
+.sort-toggle select{
+  font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  background:var(--paper-deep);border:1px solid var(--rule);
+  border-radius:var(--r);padding:2px 6px;cursor:pointer;outline:none;
+}
+/* ── STALENESS ── */
+.stale-banner{
+  display:none;margin-bottom:12px;padding:9px 14px;
+  background:rgba(180,83,9,.07);border:1px solid rgba(180,83,9,.25);
+  border-radius:var(--r);font-family:var(--mono);font-size:11px;color:var(--amber);
+  align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.stale-banner.on{display:flex}
+.stale-refresh{
+  font-family:var(--mono);font-size:10px;padding:3px 9px;
+  border:1px solid var(--amber);border-radius:var(--r);
+  background:rgba(180,83,9,.07);color:var(--amber);cursor:pointer;
+  transition:all .18s;white-space:nowrap;
+}
+.stale-refresh:hover{background:var(--amber);color:var(--paper)}
+.claim-age{font-family:var(--mono);font-size:9px;color:var(--ink-5);margin-left:auto}
+/* ── KP SUMMARY ── */
+.kp-summary{
+  padding:14px 16px;border-radius:var(--r);
+  background:var(--paper-card);border:1px solid var(--rule);
+  margin-bottom:14px;
+}
+.kp-summary-label{font-family:var(--mono);font-size:9px;color:var(--ink-4);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
+.kp-summary-text{font-size:14px;color:var(--ink-2);line-height:1.65}
+.kp-summary-gaps{margin-top:10px;padding-top:10px;border-top:1px solid var(--rule-light)}
+.kp-gaps-label{font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
+.kp-gaps-text{font-size:13px;color:var(--ink-3);line-height:1.6;font-style:italic}
+.kp-generating{font-family:var(--mono);font-size:11px;color:var(--ink-4);font-style:italic;padding:10px 0;text-align:center}
+/* ── INTENT POPUP ── */
+.intent-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;
+  display:flex;align-items:center;justify-content:center;
+  animation:fdi .18s ease;
+}
+@keyframes fdi{from{opacity:0}to{opacity:1}}
+.intent-modal{
+  background:var(--paper-card);border:1px solid var(--rule);
+  border-radius:var(--rl);box-shadow:var(--shadow-lg);
+  width:440px;max-width:92vw;padding:22px;
+  display:flex;flex-direction:column;gap:14px;
+  animation:ms .2s ease;
+}
+.intent-title{font-family:var(--serif);font-size:17px;font-weight:600;color:var(--ink)}
+.intent-src{
+  font-family:var(--mono);font-size:10px;color:var(--ink-4);
+  padding:6px 10px;background:var(--paper-deep);border-radius:var(--r);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.intent-warning{
+  font-family:var(--mono);font-size:10px;color:var(--amber);
+  padding:6px 10px;background:rgba(180,83,9,.06);border-radius:var(--r);
+  border-left:2px solid var(--amber);line-height:1.5;
+}
+.intent-opts{display:flex;flex-direction:column;gap:7px}
+.intent-opt{
+  padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r);
+  cursor:pointer;transition:all .18s;display:flex;flex-direction:column;gap:2px;
+  background:var(--paper-card);text-align:left;width:100%;
+}
+.intent-opt:hover{border-color:var(--cobalt);background:var(--cobalt-pale)}
+.intent-opt-title{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:600}
+.intent-opt-desc{font-size:12px;color:var(--ink-4);line-height:1.4}
+.intent-cancel{font-family:var(--mono);font-size:11px;color:var(--ink-4);background:none;border:none;cursor:pointer;align-self:flex-end;padding:4px}
+.intent-cancel:hover{color:var(--ink)}
+/* ── DROP ZONE ── */
+.ci-drop-zone{
+  display:none;position:absolute;inset:0;background:rgba(37,99,168,.08);
+  border:2px dashed var(--cobalt);border-radius:var(--rl);z-index:100;
+  align-items:center;justify-content:center;flex-direction:column;gap:8px;
+  font-family:var(--mono);font-size:13px;color:var(--cobalt);pointer-events:none;
+}
+.ci-drop-zone.on{display:flex}
+.ci-attach{
+  width:32px;height:32px;border-radius:var(--r);flex-shrink:0;
+  background:var(--paper-deep);border:1px solid var(--rule);cursor:pointer;
+  font-size:15px;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;color:var(--ink-4);
+}
+.ci-attach:hover{border-color:var(--cobalt);color:var(--cobalt);background:var(--cobalt-pale)}
 .ci-voice.on{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.4);animation:vp 1.2s infinite}
 @keyframes vp{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.2)}50%{box-shadow:0 0 0 6px rgba(192,57,43,0)}}
 .ci-hint{
@@ -1018,6 +1106,18 @@ select.fi{cursor:pointer}
         <button class="f-chip" onclick="filterClaims('cx',this)">Contradictions</button>
         <button class="f-chip" onclick="filterClaims('me',this)">Uncertain</button>
         <button class="f-chip kp" onclick="filterClaims('kp',this)" title="AI digest: top claims, contradictions and uncertainties at a glance">⚡ Key Points</button>
+        <div class="sort-toggle">
+          <span>Sort</span>
+          <select id="claimSort" onchange="renderClaims()">
+            <option value="newest">Newest</option>
+            <option value="hi">Highest confidence</option>
+            <option value="lo">Lowest confidence</option>
+          </select>
+        </div>
+      </div>
+      <div class="stale-banner" id="staleBanner">
+        <span id="staleMsg">⏱ Some claims may be outdated</span>
+        <button class="stale-refresh" onclick="refreshStaleClaims()">↺ Validate claims</button>
       </div>
       <div class="claim-list stagger" id="claimList"></div>
     </div>
@@ -1040,13 +1140,16 @@ select.fi{cursor:pointer}
         <div class="rp-label"><span id="rpStep">Searching…</span><span id="rpPct">0%</span></div>
         <div class="rp-track"><div class="rp-fill" id="rpFill"></div></div>
       </div>
-      <div class="ci">
+      <div class="ci" style="position:relative">
+        <div class="ci-drop-zone" id="ciDropZone">📄 Drop PDF or document here</div>
         <div class="ci-row">
           <button class="ci-voice" id="voiceBtn" onclick="startVoice()">🎙</button>
-          <textarea class="ci-ta" id="chatInput" placeholder="Ask a research question…" rows="1"
-            onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="ci-attach" onclick="document.getElementById('chatFileInput').click()" title="Attach PDF or paste URL">📎</button>
+          <textarea class="ci-ta" id="chatInput" placeholder="Ask a question, paste a URL, or drop a PDF…" rows="1"
+            onkeydown="handleChatKey(event)" oninput="handleChatInput(this)"></textarea>
           <button class="ci-send" id="sendBtn" onclick="sendMessage()">↑</button>
         </div>
+        <input type="file" id="chatFileInput" accept=".pdf,.txt,.md,.docx" style="display:none" onchange="handleFileAttach(this)">
         <div class="ci-hint">
           <label class="web-tog" id="webToggleInline" onclick="toggleWeb()">
             <div class="wt-dot" id="wtDot"></div>
@@ -1372,6 +1475,7 @@ function showTopic(id) {
   // reset filter chips
   document.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('on'));
   document.querySelector('.f-chip').classList.add('on');
+  setupDropZone();
 }
 
 function getTopic(id) {
@@ -1568,62 +1672,72 @@ function renderClaims() {
   const contraCount = all.filter(c => c.contradicts).length;
   const uncertainCount = all.filter(c => (c.confidence||0) < 0.35).length;
 
-  // Meta bar — prominent
   document.getElementById('cpMeta').innerHTML =
     `<span class="cp-meta-i"><strong>${all.length}</strong> claim${all.length!==1?'s':''}</span>
      <span class="cp-meta-i">avg confidence <strong>${Math.round(avgConf*100)}%</strong></span>
      ${contraCount ? `<span class="cp-meta-i contra"><strong>${contraCount}</strong> contradiction${contraCount!==1?'s':''}</span>` : ''}
      ${uncertainCount ? `<span class="cp-meta-i" style="color:var(--amber)"><strong>${uncertainCount}</strong> uncertain</span>` : ''}`;
 
+  // ── STALENESS CHECK ──
+  const banner = document.getElementById('staleBanner');
+  if (all.length) {
+    const staleThreshold = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const now = Date.now();
+    const staleClaims = all.filter(c => (now - (c.validatedAt || c.addedAt || 0)) > staleThreshold);
+    if (staleClaims.length) {
+      banner.classList.add('on');
+      document.getElementById('staleMsg').textContent =
+        `⏱ ${staleClaims.length} claim${staleClaims.length!==1?'s are':' is'} older than 30 days — findings may have changed`;
+    } else {
+      banner.classList.remove('on');
+    }
+  } else {
+    banner.classList.remove('on');
+  }
+
   // ── KEY POINTS panel ──
   if (state.currentFilter === 'kp') {
-    const hiClaims  = all.filter(c => !c.contradicts && (c.confidence||0) >= 0.7)
-                         .sort((a,b) => (b.confidence||0)-(a.confidence||0)).slice(0,3);
-    const cxClaims  = all.filter(c => c.contradicts).slice(0,3);
-    const loClaims  = all.filter(c => (c.confidence||0) < 0.35).slice(0,3);
-
-    const meClaims  = all.filter(c => !c.contradicts && (c.confidence||0) >= 0.35 && (c.confidence||0) < 0.7)
-                         .slice(0,2);
+    const hiClaims = all.filter(c => !c.contradicts && (c.confidence||0) >= 0.7)
+                        .sort((a,b) => (b.confidence||0)-(a.confidence||0)).slice(0,3);
+    const meClaims = all.filter(c => !c.contradicts && (c.confidence||0) >= 0.35 && (c.confidence||0) < 0.7).slice(0,2);
+    const cxClaims = all.filter(c => c.contradicts).slice(0,3);
+    const loClaims = all.filter(c => (c.confidence||0) < 0.35).slice(0,3);
 
     const makeItems = (items, dot) => items.map(c =>
-      `<div class="kp-item">
-        <div class="kp-item-dot ${dot}"></div>
-        <div class="kp-item-text">${esc(c.text)}</div>
-       </div>`
+      `<div class="kp-item"><div class="kp-item-dot ${dot}"></div><div class="kp-item-text">${esc(c.text)}</div></div>`
     ).join('');
 
     let sections = '';
-    if (hiClaims.length) sections += `
-      <div class="kp-section">
-        <div class="kp-section-title">✓ Strongest findings</div>
-        ${makeItems(hiClaims,'hi')}
-      </div>`;
-    if (meClaims.length) sections += `
-      <div class="kp-section">
-        <div class="kp-section-title">~ Supporting (medium confidence)</div>
-        ${makeItems(meClaims,'me')}
-      </div>`;
-    if (cxClaims.length) sections += `
-      <div class="kp-section">
-        <div class="kp-section-title">⚠ Contradictions to investigate</div>
-        ${makeItems(cxClaims,'cx')}
-      </div>`;
-    if (loClaims.length) sections += `
-      <div class="kp-section">
-        <div class="kp-section-title">? Uncertain — needs more research</div>
-        ${makeItems(loClaims,'lo')}
-      </div>`;
+    if (hiClaims.length) sections += `<div class="kp-section"><div class="kp-section-title">✓ Strongest findings</div>${makeItems(hiClaims,'hi')}</div>`;
+    if (meClaims.length) sections += `<div class="kp-section"><div class="kp-section-title">~ Supporting (medium confidence)</div>${makeItems(meClaims,'me')}</div>`;
+    if (cxClaims.length) sections += `<div class="kp-section"><div class="kp-section-title">⚠ Contradictions to investigate</div>${makeItems(cxClaims,'cx')}</div>`;
+    if (loClaims.length) sections += `<div class="kp-section"><div class="kp-section-title">? Uncertain — needs more research</div>${makeItems(loClaims,'lo')}</div>`;
 
     if (!all.length) {
       list.innerHTML = `<div class="claims-empty"><div class="claims-empty-icon">💡</div><h3>No claims yet</h3><p>Absorb some research findings first.</p></div>`;
     } else {
-      list.innerHTML = `<div class="kp-panel">${sections}</div>
-        <div class="kp-note">Showing top items per category · <button onclick="filterClaims('all',document.querySelector('.f-chip'))" style="background:none;border:none;color:var(--cobalt);cursor:pointer;font-size:12px;font-family:var(--mono);">View all ${all.length} claims →</button></div>`;
+      // KP summary block — cached per topic
+      const summaryHtml = t._kpSummary
+        ? `<div class="kp-summary">
+             <div class="kp-summary-label">Research digest</div>
+             <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
+             ${t._kpSummary.gaps ? `<div class="kp-summary-gaps"><div class="kp-gaps-label">Research gaps</div><div class="kp-gaps-text">${esc(t._kpSummary.gaps)}</div></div>` : ''}
+           </div>`
+        : `<div class="kp-summary"><div class="kp-generating" id="kpGenerating">⚡ Generating research digest…</div></div>`;
+
+      list.innerHTML = summaryHtml +
+        `<div class="kp-panel">${sections}</div>
+         <div class="kp-note">Showing top items per category · <button onclick="filterClaims('all',document.querySelector('.f-chip'))" style="background:none;border:none;color:var(--cobalt);cursor:pointer;font-size:12px;font-family:var(--mono);">View all ${all.length} claims →</button></div>`;
+
+      // Generate summary if not cached
+      if (!t._kpSummary) generateKpSummary();
     }
     return;
   }
 
-  const claims = all.filter(c => {
+  // ── SORT ──
+  const sortVal = document.getElementById('claimSort')?.value || 'newest';
+  let claims = all.filter(c => {
     if (state.currentFilter === 'all') return true;
     if (state.currentFilter === 'hi') return (c.confidence||0) >= 0.7;
     if (state.currentFilter === 'me') return (c.confidence||0) >= 0.35 && (c.confidence||0) < 0.7;
@@ -1632,17 +1746,16 @@ function renderClaims() {
     return true;
   });
 
+  if (sortVal === 'hi') claims = [...claims].sort((a,b) => (b.confidence||0)-(a.confidence||0));
+  else if (sortVal === 'lo') claims = [...claims].sort((a,b) => (a.confidence||0)-(b.confidence||0));
+  // 'newest' = default insertion order
+
   if (!claims.length) {
     const filterLabels = {hi:'High confidence',cx:'Contradictions',me:'Uncertain',lo:'Low confidence'};
     const hint = state.currentFilter !== 'all'
       ? `No <strong>${filterLabels[state.currentFilter]||''}</strong> claims yet.${state.currentFilter==='cx'?' Contradictions are detected automatically when you absorb new claims that conflict with existing ones.':state.currentFilter==='me'?' Medium confidence claims appear when the AI rates a finding between 35–70%.':''}`
       : 'Ask research questions on the right and absorb the findings here.';
-    list.innerHTML = `
-      <div class="claims-empty">
-        <div class="claims-empty-icon">${state.currentFilter==='cx'?'⚠':'📄'}</div>
-        <h3>${all.length ? 'Nothing here yet' : 'No claims yet'}</h3>
-        <p>${hint}</p>
-      </div>`;
+    list.innerHTML = `<div class="claims-empty"><div class="claims-empty-icon">${state.currentFilter==='cx'?'⚠':'📄'}</div><h3>${all.length ? 'Nothing here yet' : 'No claims yet'}</h3><p>${hint}</p></div>`;
     return;
   }
 
@@ -1653,21 +1766,24 @@ function renderClaims() {
     const hasSources = (c.sources||[]).length > 0;
     const classified = hasSources && (c.sources||[]).every(s=>s.tier);
     const sqScore = classified ? sourceQualityScore(c.sources) : null;
-    const sqPct = sqScore !== null ? Math.round(sqScore*100) : null;
 
     const card = document.createElement('div');
     card.className = `cc ${isContra ? 'cx' : confClass}`;
     card.dataset.claimId = c.id;
 
-    // Build the tiny source quality preview shown in collapsed state
     const srcPreview = hasSources
       ? `<span style="font-family:var(--mono);font-size:9px;color:var(--ink-4)">${(c.sources||[]).length} source${(c.sources||[]).length!==1?'s':''}</span>`
       : `<span style="font-family:var(--mono);font-size:9px;color:var(--ink-5)">no sources</span>`;
+
+    // Age indicator for stale claims
+    const claimAge = c.addedAt ? Date.now() - c.addedAt : 0;
+    const ageLabel = claimAge > 30*24*60*60*1000 ? `<span class="claim-age">${reltime(c.addedAt)}</span>` : '';
 
     card.innerHTML = `
       <div class="cc-top">
         <span class="cc-num">CLAIM ${String(i+1).padStart(2,'0')}</span>
         <span class="conf-pip ${isContra ? 'cx' : confClass}">${isContra ? '⚠ Contradiction' : confLabel + ' confidence'}</span>
+        ${ageLabel}
       </div>
       <div class="cc-text">${esc(c.text)}</div>
       ${c.why ? `<div class="cc-why">${esc(c.why)}</div>` : ''}
@@ -1685,24 +1801,279 @@ function renderClaims() {
       </div>
     `;
     list.appendChild(card);
-
-    // If already classified, pre-populate the drawer (no extra API call)
-    if (classified) {
-      updateClaimDrawer(card, c);
-    }
+    if (classified) updateClaimDrawer(card, c);
   });
 }
+
 
 function filterClaims(f, el) {
   state.currentFilter = f;
   document.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('on'));
   if (el) el.classList.add('on');
   else {
-    // called from inside kp panel "View all" link
     const all = document.querySelector('.f-chip');
     if (all) all.classList.add('on');
   }
   renderClaims();
+}
+
+// ── KP SUMMARY GENERATION ──
+async function generateKpSummary() {
+  const t = getTopic();
+  if (!t || !(t.claims||[]).length) return;
+  const key = getKey(); if (!key) return;
+  const prov = getActiveProvider();
+
+  const claimsText = (t.claims||[]).map((c,i) =>
+    `${i+1}. [${Math.round((c.confidence||0)*100)}% confidence${c.contradicts?' CONTRADICTED':''}] ${c.text}`
+  ).join('\n');
+
+  const prompt = `You are analysing a research knowledge base on the topic: "${t.title}".
+
+Claims collected so far:
+${claimsText}
+
+Write a concise research digest in two parts. Return ONLY valid JSON:
+{
+  "overview": "2-3 sentence paragraph summarising the state of knowledge — what is well-established, what is contested, and what the overall picture suggests. Be specific, not generic.",
+  "gaps": "1-2 sentences identifying the most significant gaps or weaknesses in this research: what important questions remain unanswered, what has low-quality sourcing, or what contradictions need resolving."
+}`;
+
+  try {
+    let raw = '';
+    if (prov === 'claude') {
+      const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}, body: JSON.stringify({ model: state.models.claude||'claude-haiku-4-5-20251001', max_tokens:400, messages:[{role:'user',content:prompt}] }) });
+      const d = await r.json(); raw = d.content?.[0]?.text||'';
+    } else if (prov === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key}, body: JSON.stringify({ model:'gpt-4o-mini', messages:[{role:'user',content:prompt}], max_tokens:400 }) });
+      const d = await r.json(); raw = d.choices?.[0]?.message?.content||'';
+    } else if (prov.startsWith('custom:')) {
+      const n = prov.replace('custom:',''), cp = state.customProviders.find(p=>p.name===n);
+      if (cp) { const r = await fetch(cp.endpoint, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+cp.key}, body: JSON.stringify({ model:cp.model, messages:[{role:'user',content:prompt}], max_tokens:400 }) }); const d = await r.json(); raw = d.choices?.[0]?.message?.content||''; }
+    } else {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${state.models.gemini||'gemini-2.0-flash'}:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{role:'user',parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:400} }) });
+      const d = await r.json(); raw = d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+    }
+    const parsed = parseClaimsFromRaw(raw);
+    if (parsed && parsed.overview) {
+      t._kpSummary = { overview: parsed.overview, gaps: parsed.gaps||'' };
+      // Re-render only the summary block, don't full re-render
+      if (state.currentFilter === 'kp') {
+        const gen = document.getElementById('kpGenerating');
+        if (gen) {
+          const block = gen.closest('.kp-summary');
+          if (block) block.outerHTML = `<div class="kp-summary">
+            <div class="kp-summary-label">Research digest</div>
+            <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
+            ${t._kpSummary.gaps ? `<div class="kp-summary-gaps"><div class="kp-gaps-label">Research gaps</div><div class="kp-gaps-text">${esc(t._kpSummary.gaps)}</div></div>` : ''}
+          </div>`;
+        }
+      }
+    }
+  } catch(e) {
+    const gen = document.getElementById('kpGenerating');
+    if (gen) gen.textContent = 'Could not generate digest.';
+  }
+}
+
+// ── STALENESS REFRESH ──
+async function refreshStaleClaims() {
+  const t = getTopic();
+  if (!t || !(t.claims||[]).length) return;
+  if (!getKey()) { toast('Configure an API key first','err'); return; }
+
+  const staleThreshold = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const staleClaims = t.claims.filter(c => (now - (c.validatedAt || c.addedAt || 0)) > staleThreshold);
+  if (!staleClaims.length) { toast('All claims are recent'); return; }
+
+  toast(`Validating ${staleClaims.length} claim${staleClaims.length!==1?'s':''}…`);
+
+  const claimList = staleClaims.slice(0,5).map(c => `• "${c.text.substring(0,100)}"`).join('\n');
+  const prompt = `I'm researching the topic: "${t.title}". These claims were added 30+ days ago and may be outdated. For each, briefly state whether it is still accurate, has changed, or needs updating as of today. Be specific.\n\n${claimList}`;
+
+  sendMessage(prompt);
+
+  // Mark as validated now (optimistic — user can absorb updated claims)
+  staleClaims.forEach(c => { c.validatedAt = now; });
+  save();
+  document.getElementById('staleBanner').classList.remove('on');
+}
+
+// ── INTENT POPUP (URL + PDF) ──
+let _intentPending = null; // { type:'url'|'pdf', src, fileData, fileName }
+
+function showIntentPopup(payload) {
+  _intentPending = payload;
+  const isUrl = payload.type === 'url';
+  const isPdf = payload.type === 'pdf';
+  const prov = getActiveProvider();
+  const isNonClaude = prov !== 'claude';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'intent-overlay';
+  overlay.id = 'intentOverlay';
+
+  const srcDisplay = isUrl
+    ? payload.src.substring(0,60) + (payload.src.length > 60 ? '…' : '')
+    : (payload.fileName || 'Attached document');
+
+  const warning = (isPdf && isNonClaude)
+    ? `<div class="intent-warning">⚠ PDF analysis works best with Claude. Results may vary with other providers.</div>`
+    : isNonClaude
+    ? `<div class="intent-warning">⚠ URL content retrieval depends on your AI provider's web access. Results may vary.</div>`
+    : '';
+
+  overlay.innerHTML = `
+    <div class="intent-modal">
+      <div class="intent-title">${isUrl ? '🔗 Analyse URL' : '📄 Analyse document'}</div>
+      <div class="intent-src">${esc(srcDisplay)}</div>
+      ${warning}
+      <div class="intent-opts">
+        <button class="intent-opt" onclick="dispatchIntent('summary')">
+          <div class="intent-opt-title">📋 Summarise</div>
+          <div class="intent-opt-desc">Extract the key points and main argument</div>
+        </button>
+        <button class="intent-opt" onclick="dispatchIntent('claims')">
+          <div class="intent-opt-title">🔍 Extract & validate claims</div>
+          <div class="intent-opt-desc">Pull out factual claims and assess their credibility</div>
+        </button>
+        <button class="intent-opt" onclick="dispatchIntent('counter')">
+          <div class="intent-opt-title">⚖ Find counter-arguments</div>
+          <div class="intent-opt-desc">Identify what challenges or contradicts this content</div>
+        </button>
+        <button class="intent-opt" onclick="dispatchIntent('full')">
+          <div class="intent-opt-title">⚡ Full analysis</div>
+          <div class="intent-opt-desc">Summary + claim extraction + counter-arguments</div>
+        </button>
+      </div>
+      <button class="intent-cancel" onclick="closeIntentPopup()">Cancel</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeIntentPopup(); });
+}
+
+function closeIntentPopup() {
+  const el = document.getElementById('intentOverlay');
+  if (el) el.remove();
+  _intentPending = null;
+}
+
+async function dispatchIntent(mode) {
+  const payload = _intentPending;
+  closeIntentPopup();
+  if (!payload) return;
+
+  const modePrompts = {
+    summary: 'Summarise the key points and main argument of this content. What is it saying and why does it matter?',
+    claims:  'Extract the key factual claims from this content. For each, assess its credibility: is it well-sourced, does it align with other evidence, and what is the confidence level? Flag anything that seems misleading or weakly supported.',
+    counter: 'What are the strongest counter-arguments, contradictions, or challenges to the claims in this content? Cite alternative evidence or perspectives where possible.',
+    full:    'Conduct a full analysis: (1) summarise the main argument, (2) extract and assess key factual claims with credibility notes, (3) identify the strongest counter-arguments and contradictions. Be thorough and specific.',
+  };
+
+  const instruction = modePrompts[mode] || modePrompts.full;
+
+  if (payload.type === 'url') {
+    const q = `${instruction}\n\nSource URL: ${payload.src}`;
+    sendMessage(q);
+  } else if (payload.type === 'pdf') {
+    // Send as Claude document (base64)
+    await sendPdfMessage(instruction, payload.fileData, payload.fileName, payload.mediaType);
+  }
+}
+
+// ── FILE ATTACH HANDLER ──
+async function handleFileAttach(input) {
+  const file = input.files[0]; if (!file) return;
+  input.value = '';
+
+  const isPdf = file.type === 'application/pdf' || file.name.endsWith('.pdf');
+  const isText = file.type.startsWith('text/') || file.name.match(/\.(txt|md|csv)$/i);
+
+  if (isPdf) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      showIntentPopup({ type:'pdf', src: file.name, fileName: file.name, fileData: base64, mediaType: 'application/pdf' });
+    };
+    reader.readAsDataURL(file);
+  } else if (isText) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      showIntentPopup({ type:'pdf', src: file.name, fileName: file.name, fileData: e.target.result, mediaType: 'text' });
+    };
+    reader.readAsText(file);
+  } else {
+    toast('Supported: PDF, TXT, MD files', 'err');
+  }
+}
+
+// ── SEND PDF MESSAGE ──
+async function sendPdfMessage(instruction, fileData, fileName, mediaType) {
+  if (!getKey()) { toast('Configure an API key first','err'); openSettings(); return; }
+  const prov = getActiveProvider();
+
+  appendUserBubble(`📄 ${fileName} — ${instruction.substring(0,60)}…`);
+  setLoading(true); showThinking();
+
+  try {
+    let reply;
+    if (prov === 'claude') {
+      // Claude supports PDF natively
+      const content = mediaType === 'text'
+        ? [{ type:'text', text: `${instruction}\n\nDocument content:\n${fileData}` }]
+        : [
+            { type:'document', source:{ type:'base64', media_type:'application/pdf', data: fileData } },
+            { type:'text', text: instruction }
+          ];
+      const key = getKey();
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','anthropic-beta':'pdfs-2024-09-25'},
+        body: JSON.stringify({ model: state.models.claude||'claude-sonnet-4-6', max_tokens:2048, system: buildSystem(), messages:[{ role:'user', content }], stream:false })
+      });
+      const d = await r.json();
+      reply = { text: d.content?.map(b=>b.text||'').join('') || '', citations:[] };
+    } else {
+      // Fallback: send as text prompt for other providers
+      const textContent = mediaType === 'text' ? fileData : '[PDF content — for best results use Claude which supports native PDF analysis]';
+      const msgs = [...state.messages, { role:'user', content:`${instruction}\n\nDocument: ${fileName}\n${textContent.substring(0,3000)}` }];
+      reply = await callAI(msgs);
+    }
+
+    hideThinking();
+    finaliseStreamBubble(reply.text, reply.citations||[]);
+    state.messages.push({ role:'user', content:`[Document: ${fileName}] ${instruction}` });
+    state.messages.push({ role:'assistant', content: reply.text });
+    enableResearchBtns();
+
+    const absorb = await extractClaims(instruction, reply.text, reply.citations||[]);
+    if (absorb?.length) appendAbsorbPanel(absorb, reply.citations||[]);
+  } catch(e) {
+    hideThinking();
+    const msgs = document.getElementById('chatMsgs');
+    const d = document.createElement('div'); d.className='m-a';
+    d.innerHTML=`<p style="color:var(--vermillion)">⚠ ${esc(e.message)}</p>`;
+    msgs.appendChild(d);
+  } finally { setLoading(false); }
+}
+
+// ── DRAG AND DROP SETUP ── (called on showTopic)
+function setupDropZone() {
+  const chatPanel = document.querySelector('.chat-panel');
+  if (!chatPanel || chatPanel._dropSetup) return;
+  chatPanel._dropSetup = true;
+  const zone = document.getElementById('ciDropZone');
+
+  chatPanel.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('on'); });
+  chatPanel.addEventListener('dragleave', e => { if (!chatPanel.contains(e.relatedTarget)) zone.classList.remove('on'); });
+  chatPanel.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('on');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const fakeInput = { files:[file], value:'' };
+    handleFileAttach(fakeInput);
+  });
 }
 
 function saveTopicName() {
@@ -1986,11 +2357,7 @@ function reresearchClaim(claimId) {
   const t = getTopic();
   const claim = (t?.claims||[]).find(c=>c.id===claimId);
   if (!claim) return;
-  // Fire a targeted follow-up query into the chat
-  const q = `Find authoritative primary sources to verify this claim: "${claim.text.substring(0,120)}"`;
-  document.getElementById('chatInput').value = q;
-  document.getElementById('chatInput').focus();
-  // scroll chat into view on mobile
+  const q = `Find authoritative primary sources to verify or refute this claim: "${claim.text.substring(0,120)}". Prioritise in this order: (1) peer-reviewed studies or academic sources, (2) government or official statistics, (3) major newswires (Reuters, AP, AFP), (4) established quality outlets. Avoid SEO aggregators and sites without primary citations. State clearly whether current evidence supports, contradicts, or is ambiguous on the claim.`;
   sendMessage(q);
 }
 
@@ -2055,6 +2422,15 @@ function handleChatKey(e) {
 function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+// Handles oninput — resize + URL detection hint
+function handleChatInput(ta) {
+  autoResize(ta);
+  const val = ta.value.trim();
+  const isUrl = /^https?:\/\/[^\s]{8,}/.test(val);
+  const hint = document.querySelector('.ci-hint span:last-child');
+  if (hint) hint.textContent = isUrl ? '↵ to analyse URL' : '↵ send · shift+↵ newline';
 }
 
 function appendUserBubble(text) {
@@ -2151,6 +2527,15 @@ async function sendMessage(overrideText) {
   const text = overrideText || input.value.trim();
   if (!text || state.isLoading) return;
   if (!getKey()) { toast('Configure an API key first','err'); openSettings(); return; }
+
+  // ── URL interception ──
+  const urlMatch = text.match(/^(https?:\/\/[^\s]{8,})$/);
+  if (urlMatch && !overrideText) {
+    input.value = '';
+    input.style.height = 'auto';
+    showIntentPopup({ type: 'url', src: urlMatch[1] });
+    return;
+  }
 
   input.value = '';
   input.style.height = 'auto';
@@ -2275,6 +2660,7 @@ function appendAbsorbPanel(claims, citations) {
         added++;
       });
       t.updatedAt = Date.now();
+      t._kpSummary = null; // invalidate KP digest cache
       save();
       panel.remove();
       renderClaims();
@@ -2316,7 +2702,7 @@ function getActiveProvider() { return state.provider; }
 function buildSystem() {
   const t = getTopic();
   const topicCtx = t ? `You are helping research the topic: "${t.title}". ` : '';
-  return `You are MyResAssist, a precision research assistant. ${topicCtx}Provide well-structured, factual, insightful responses. Use **bold** for key terms. Be direct and substantive. When web search is available, use it for current information.`;
+  return `You are MyResAssist, a precision research assistant. ${topicCtx}Provide well-structured, factual, insightful responses. Use **bold** for key terms. Be direct and substantive. When web search is available, use it for current information. When citing sources, prioritise in this order: (1) peer-reviewed academic sources, (2) government/official statistics, (3) major newswires (Reuters, AP, AFP, Bloomberg), (4) established quality outlets. Flag when a claim relies only on lower-tier sources.`;
 }
 
 async function callAI(messages) {
