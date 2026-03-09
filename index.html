@@ -1956,16 +1956,16 @@ function researchGaps() {
   if (!t?._kpSummary?.gaps) return;
   const gaps = t._kpSummary.gaps;
   const prompt = `The following research gaps have been identified in my knowledge base on "${t.title}":\n\n${gaps}\n\nPlease research these gaps specifically. For each gap, find the most credible evidence available (prioritising peer-reviewed sources, official statistics, and major newswires), state what can be answered with confidence and what remains genuinely uncertain, and suggest what further primary sources would best resolve each gap.`;
-  // On mobile, open the chat panel first
-  const chatPanel = document.getElementById('chatPanel');
-  if (chatPanel && window.getComputedStyle(chatPanel).display === 'none') {
+
+  // On mobile the chat panel is hidden via transform, not display:none.
+  // Check for the mobile breakpoint by seeing if the FAB is visible.
+  const fab = document.getElementById('chatFab');
+  const isMobileLayout = fab && window.getComputedStyle(fab).display !== 'none';
+  if (isMobileLayout) {
     openMobileChat();
-  }
-  const input = document.getElementById('chatInput');
-  if (input) {
-    input.value = prompt;
-    input.focus();
-    autoResize(input);
+    // Give the panel time to slide up before firing the message
+    setTimeout(() => { sendMessage(prompt); }, 320);
+    return;
   }
   sendMessage(prompt);
 }
@@ -2907,6 +2907,12 @@ function appendAbsorbPanel(claims, citations) {
       save();
       panel.remove();
       renderClaims();
+      // If user is on Key Points filter, force the regenerating state to be visible immediately
+      if (state.currentFilter === 'kp') {
+        const kpSum = document.querySelector('.kp-summary');
+        if (kpSum) kpSum.innerHTML = `<div class="kp-generating" id="kpGenerating">⚡ Updating research digest…</div>`;
+        generateKpSummary();
+      }
       toast(`${added} claim${added!==1?'s':''} absorbed`);
     };
   };
