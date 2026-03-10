@@ -903,6 +903,9 @@ body::before{
 .acr-conf.hi{color:var(--forest)}
 .acr-conf.me{color:var(--amber)}
 .acr-conf.lo{color:var(--slate)}
+.acr-dupe{font-family:var(--mono);font-size:11px;margin-top:3px;color:var(--ink-4);font-style:italic}
+.acr.is-dupe .acr-text{color:var(--ink-4)}
+.acr.is-dupe .ach{opacity:0.4}
 .absorb-ftr{display:flex;gap:7px;align-items:center;justify-content:space-between}
 .absorb-btn{
   padding:6px 16px;border-radius:var(--r);font-family:var(--mono);
@@ -3087,21 +3090,41 @@ function appendAbsorbPanel(claims, citations) {
   const panel = document.createElement('div');
   panel.className = 'absorb fi-anim';
 
-  let allChecked = true;
-  const checkState = claims.map(()=>true);
+  // ── Duplicate detection ──
+  // Compare incoming claims against what's already in the knowledge base.
+  // Uses word-overlap: if 60%+ of significant words match an existing claim, flag as duplicate.
+  const t = getTopic();
+  const existing = (t?.claims || []).map(c => c.text.toLowerCase());
+
+  function isSimilar(newText) {
+    const words = newText.toLowerCase().split(/\W+/).filter(w => w.length > 4);
+    if (!words.length) return false;
+    return existing.some(ex => {
+      const exWords = ex.split(/\W+/).filter(w => w.length > 4);
+      const shared = words.filter(w => exWords.includes(w));
+      return shared.length / words.length >= 0.6;
+    });
+  }
+
+  const isDupe = claims.map(c => isSimilar(c.text));
+  // Pre-uncheck duplicates
+  const checkState = claims.map((_, i) => !isDupe[i]);
 
   const render = () => {
     panel.innerHTML = `
       <div class="absorb-title">↓ Absorb into knowledge base</div>
       <div class="absorb-claims">
         ${claims.map((c,i) => `
-          <div class="acr">
+          <div class="acr${isDupe[i] ? ' is-dupe' : ''}">
             <div class="ach ${checkState[i]?'on':''}" onclick="toggleAbsorbCheck(this,${i})">
               ${checkState[i]?'✓':''}
             </div>
             <div class="acr-body" onclick="document.querySelector('.acr:nth-child(${i+1}) .ach').click()">
               <div class="acr-text">${esc(c.text)}</div>
-              <div class="acr-conf ${c.confClass}">${c.confLabel} confidence</div>
+              ${isDupe[i]
+                ? `<div class="acr-dupe">↩ Already in knowledge base</div>`
+                : `<div class="acr-conf ${c.confClass}">${c.confLabel} confidence</div>`
+              }
             </div>
           </div>
         `).join('')}
