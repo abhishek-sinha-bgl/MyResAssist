@@ -1553,8 +1553,6 @@ function showWall() {
   document.getElementById('newTopicBtn').style.display = 'none';
   state.activeTopicId = null;
   state.messages = [];
-  // Push wall state so back button from wall triggers confirm-exit, not browser back
-  history.replaceState({ view: 'wall' }, '');
   renderWall();
 }
 
@@ -4134,18 +4132,23 @@ renderWall();
 updateWebToggleUI();
 
 // ── Android / browser back button handler ──
-// On app load, set wall state so we have a baseline history entry.
+// Push TWO wall states on load. This ensures there is always a history entry
+// below the current one for Android to pop — without it, pressing back from the
+// wall exits the app directly without firing popstate at all.
 history.replaceState({ view: 'wall' }, '');
+history.pushState({ view: 'wall' }, '');
 
 window.addEventListener('popstate', (e) => {
   const inTopic = document.getElementById('viewTopic')?.classList.contains('active');
   if (inTopic) {
-    // Back from topic → go to wall (push wall state back so next back triggers exit confirm)
+    // Back from topic → go to wall, then push a fresh wall entry so the
+    // next back press fires popstate again rather than exiting silently.
     showWall();
-    history.replaceState({ view: 'wall' }, '');
+    history.pushState({ view: 'wall' }, '');
   } else {
-    // Back from wall → show exit confirm instead of leaving the app
-    history.pushState({ view: 'wall' }, ''); // re-push so we stay in app
+    // Back from wall → show exit confirm instead of leaving the app.
+    // Re-push wall state so we remain in the history stack.
+    history.pushState({ view: 'wall' }, '');
     showExitConfirm();
   }
 });
