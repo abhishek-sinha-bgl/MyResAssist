@@ -2018,25 +2018,23 @@ Write a concise research digest in two parts. Return ONLY valid JSON:
     } catch(e) {}
     if (parsed && parsed.overview) {
       t._kpSummary = { overview: parsed.overview, gaps: parsed.gaps||'' };
-      // Re-render summary block in-place without full re-render
+      // Re-render summary block in-place without full re-render.
+      // Find by class rather than id — the id may be gone if DOM was touched during async wait.
       if (state.currentFilter === 'kp') {
-        const gen = document.getElementById('kpGenerating');
-        if (gen) {
-          const block = gen.closest('.kp-summary');
-          if (block) {
-            block.innerHTML = `
-              <div class="kp-summary-label">Research digest</div>
-              <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
-              ${buildGapsHtml(t._kpSummary.gaps)}
-            `;
-            linkClaimRefs(block);
-          }
+        const block = document.querySelector('.kp-summary');
+        if (block) {
+          block.innerHTML = `
+            <div class="kp-summary-label">Research digest</div>
+            <div class="kp-summary-text">${md(t._kpSummary.overview)}</div>
+            ${buildGapsHtml(t._kpSummary.gaps)}
+          `;
+          linkClaimRefs(block);
         }
       }
     }
   } catch(e) {
-    const gen = document.getElementById('kpGenerating');
-    if (gen) gen.textContent = 'Could not generate digest.';
+    const block = document.querySelector('.kp-summary');
+    if (block) block.innerHTML = `<div class="kp-generating" style="color:var(--vermillion)">Could not generate digest — try again.</div>`;
   }
 }
 
@@ -2972,8 +2970,10 @@ function finaliseStreamBubble(text, citations) {
       extractBtn.classList.add('copied');
       setTimeout(() => { extractBtn.textContent = '↓ Extract claims'; extractBtn.classList.remove('copied'); }, 3000);
     } else {
-      extractBtn.textContent = '↓ None found';
-      setTimeout(() => { extractBtn.textContent = '↓ Extract claims'; }, 2500);
+      // No new claims — likely already absorbed. Give the user a clear signal.
+      extractBtn.textContent = '✓ Already absorbed';
+      extractBtn.classList.add('copied');
+      setTimeout(() => { extractBtn.textContent = '↓ Extract claims'; extractBtn.classList.remove('copied'); }, 3000);
     }
   };
   acts.appendChild(extractBtn);
@@ -3166,13 +3166,7 @@ function appendAbsorbPanel(claims, citations) {
       t._kpSummary = null; // invalidate KP digest cache
       save();
       panel.remove();
-      renderClaims();
-      // If user is on Key Points filter, force the regenerating state to be visible immediately
-      if (state.currentFilter === 'kp') {
-        const kpSum = document.querySelector('.kp-summary');
-        if (kpSum) kpSum.innerHTML = `<div class="kp-generating" id="kpGenerating">⚡ Updating research digest…</div>`;
-        generateKpSummary();
-      }
+      renderClaims(); // renderClaims handles KP regeneration automatically when _kpSummary is null
       toast(`${added} claim${added!==1?'s':''} absorbed`);
     };
   };
