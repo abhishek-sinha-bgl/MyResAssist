@@ -599,12 +599,12 @@ body::before{
 .src-none{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-style:italic;padding:8px 2px;line-height:1.6}
 /* re-research button */
 .cc-reresearch{
-  font-family:var(--mono);font-size:10px;color:var(--cobalt);
-  background:var(--cobalt-pale);border:1px solid rgba(37,99,168,.25);
-  border-radius:var(--r);padding:4px 10px;cursor:pointer;
-  transition:all .18s;letter-spacing:.3px;
+  font-family:var(--mono);font-size:11px;color:var(--paper);
+  background:var(--cobalt);border:1px solid var(--cobalt);
+  border-radius:var(--r);padding:5px 12px;cursor:pointer;
+  transition:all .18s;letter-spacing:.3px;font-weight:600;
 }
-.cc-reresearch:hover{background:var(--cobalt);color:var(--paper)}
+.cc-reresearch:hover{filter:brightness(1.15);}
 .cc-acts{
   display:flex;gap:6px;padding-top:10px;
   border-top:1px solid var(--rule-light);margin-top:4px;
@@ -685,6 +685,9 @@ body::before{
 .bact:hover{border-color:var(--cobalt);color:var(--cobalt);background:var(--cobalt-pale)}
 .bact.share{border-color:rgba(37,99,168,.3);color:var(--cobalt);background:var(--cobalt-pale)}
 .bact.share:hover{background:var(--cobalt);color:var(--paper)}
+.bact.extract{border-color:rgba(180,83,9,.35);color:var(--amber);background:rgba(180,83,9,.07)}
+.bact.extract:hover{background:var(--amber);color:var(--paper)}
+.bact.extract.working{opacity:.6;pointer-events:none}
 .bact.copied{border-color:var(--forest);color:var(--forest);background:rgba(45,106,79,.08)}
 .m-meta{
   font-family:var(--mono);font-size:12px;color:var(--ink-4);
@@ -2428,6 +2431,29 @@ function extractInlineCitations(text) {
       inlineCitation: true,
     });
   }
+
+  // ── Second pass: Gemini bare-number format  ──
+  // Matches lines like:  1 medium.com   or   12 mckinsey.com
+  // Only runs if no [N] citations were found (to avoid double-counting)
+  if (results.length === 0) {
+    const barePattern = /^[ \t]*(\d+)\s+([\w][\w.-]+\.[a-z]{2,})[ \t]*$/gm;
+    let b;
+    while ((b = barePattern.exec(text)) !== null) {
+      const idx = b[1];
+      const domain = b[2].toLowerCase().trim();
+      if (seen.has('bare|' + domain)) continue;
+      seen.add('bare|' + domain);
+      // Derive a display publisher name from the domain
+      const publisher = domain.replace(/^www\./, '').replace(/\.[^.]+$/, '');
+      results.push({
+        url: `https://${domain}`,
+        title: domain,
+        publisher,
+        inlineCitation: false, // real domain — classifyByRules will handle it
+      });
+    }
+  }
+
   return results;
 }
 
@@ -2925,9 +2951,39 @@ function finaliseStreamBubble(text, citations) {
   };
   acts.appendChild(shareBtn);
 
+  // ↓ Extract claims — re-runs claim extraction on demand for responses where
+  // auto-extraction found nothing or under-extracted (e.g. long structured reports)
+  const extractBtn = document.createElement('button');
+  extractBtn.className = 'bact extract';
+  extractBtn.textContent = '↓ Extract claims';
+  extractBtn.onclick = async () => {
+    extractBtn.textContent = '↓ Extracting…';
+    extractBtn.classList.add('working');
+    // Use last user message as query context, or fall back to a generic label
+    const msgs = state.messages;
+    const lastUser = [...msgs].reverse().find(m => m.role === 'user');
+    const query = lastUser?.content || 'research response';
+    const storedCits = wrap._citations || [];
+    const claims = await extractClaims(query, text, storedCits, { limit: 8, mode: 'report' });
+    extractBtn.classList.remove('working');
+    if (claims?.length) {
+      appendAbsorbPanel(claims, storedCits);
+      extractBtn.textContent = `✓ ${claims.length} claim${claims.length !== 1 ? 's' : ''} found`;
+      extractBtn.classList.add('copied');
+      setTimeout(() => { extractBtn.textContent = '↓ Extract claims'; extractBtn.classList.remove('copied'); }, 3000);
+    } else {
+      extractBtn.textContent = '↓ None found';
+      setTimeout(() => { extractBtn.textContent = '↓ Extract claims'; }, 2500);
+    }
+  };
+  acts.appendChild(extractBtn);
+
   // Wrap bubble + acts together so hover works
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap';
+  // Store raw response data on wrap for re-extraction by the Extract claims button
+  wrap._rawText = text;
+  wrap._citations = citations || [];
   b.parentNode.insertBefore(wrap, b);
   wrap.appendChild(b);
   wrap.appendChild(acts);
@@ -3346,16 +3402,32 @@ function parseClaimsFromRaw(raw) {
   }).filter(c => c.text.length > 10); // drop empty/malformed
 }
 
-async function extractClaims(query, response, citations) {
+async function extractClaims(query, response, citations, opts = {}) {
   const key = getKey();
   if (!key) return [];
   const prov = getActiveProvider();
   const t = getTopic();
   const existing = (t?.claims||[]).map(c=>c.text).join('\n');
-
-  // Use a more directive prompt that works with OSS/reasoning models
   const isCustom = prov.startsWith('custom:');
-  const prompt = `Extract 2-4 key factual claims from this research exchange.
+
+  // opts.limit: max claims to extract (default 6, re-extract uses 8)
+  // opts.mode: 'auto' (default) | 'report' (structured/long responses)
+  const limit = opts.limit || 6;
+  const isReport = opts.mode === 'report';
+
+  const prompt = isReport
+    ? `Extract up to ${limit} distinct factual claims from this research report. Focus on specific quantitative findings, named sources, and concrete conclusions — not general observations.
+
+Report text:
+${response.substring(0, 8000)}
+${existing ? `\nAlready captured (do not duplicate):\n${existing}` : ''}
+
+Output ONLY this JSON — no preamble, no markdown fences:
+{"claims":[{"text":"specific factual claim with numbers/names where available","why":"one sentence on significance","confidence":0.75,"contradicts":null}]}
+
+Confidence guide: 0.85+ = named primary source cited (govt/academic/newswire). 0.65-0.84 = established outlet or expert cited. 0.40-0.64 = general finding, source unclear. 0.10-0.39 = inferred or anecdotal.
+"contradicts" = exact text of a contradicted existing claim above, or null.`
+    : `Extract ${limit > 4 ? '2-'+limit : '2-4'} key factual claims from this research exchange.
 
 Query: "${query}"
 Response: ${response.substring(0,6000)}
@@ -3369,8 +3441,7 @@ Confidence: 0.85+ = named primary source (govt/academic/newswire). 0.60-0.84 = e
 
   try {
     let raw = '';
-    // Use higher max_tokens for custom/OSS models which tend to be more verbose
-    const maxTok = isCustom ? 1200 : 800;
+    const maxTok = isCustom || isReport ? 1500 : 800;
 
     if (prov === 'claude') {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
