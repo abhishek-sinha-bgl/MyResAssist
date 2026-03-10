@@ -184,8 +184,11 @@ body::before{
 .tb-logo{
   font-family:var(--serif);font-size:21px;font-weight:700;
   color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px;
-  letter-spacing:-0.3px;
+  letter-spacing:-0.3px;border-radius:var(--r);padding:4px 6px;margin:-4px -6px;
+  transition:background .18s;
 }
+.tb-logo:hover{background:var(--paper-deep)}
+.tb-logo:hover em{color:var(--cobalt)}
 .tb-logo em{font-weight:400;font-style:italic;color:var(--ink-3);font-size:13px;letter-spacing:0}
 .tb-r{display:flex;align-items:center;gap:10px}
 .tb-btn{
@@ -417,12 +420,18 @@ body::before{
 .cp{flex:1;overflow-y:auto;padding:28px 28px 80px;border-right:1px solid var(--rule);display:flex;flex-direction:column}
 .cp-hdr{margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--ink)}
 .back-btn{
-  font-family:var(--mono);font-size:11px;color:var(--ink-4);
-  background:none;border:none;cursor:pointer;padding:0;
-  margin-bottom:14px;display:flex;align-items:center;gap:5px;
-  letter-spacing:.5px;transition:color .18s;
+  font-family:var(--mono);font-size:12px;color:var(--ink-3);
+  background:var(--paper-deep);border:1px solid var(--rule);
+  border-radius:var(--r);cursor:pointer;
+  padding:6px 12px;margin-bottom:14px;
+  display:inline-flex;align-items:center;gap:6px;
+  letter-spacing:.3px;transition:all .18s;
+  min-height:34px;
 }
-.back-btn:hover{color:var(--cobalt)}
+.back-btn:hover{color:var(--cobalt);border-color:var(--cobalt);background:var(--cobalt-pale)}
+@media(max-width:700px){
+  .back-btn{font-size:13px;padding:8px 14px;min-height:40px;margin-bottom:12px}
+}
 .topic-name-input{
   font-family:var(--serif);font-size:28px;font-weight:700;
   color:var(--ink);letter-spacing:-.4px;line-height:1.2;
@@ -1544,6 +1553,8 @@ function showWall() {
   document.getElementById('newTopicBtn').style.display = 'none';
   state.activeTopicId = null;
   state.messages = [];
+  // Push wall state so back button from wall triggers confirm-exit, not browser back
+  history.replaceState({ view: 'wall' }, '');
   renderWall();
 }
 
@@ -1555,6 +1566,8 @@ function showTopic(id) {
   document.getElementById('viewWall').className = 'view';
   document.getElementById('viewTopic').className = 'view active';
   document.getElementById('newTopicBtn').style.display = 'flex';
+  // Push topic state so Android back button returns to wall instead of leaving app
+  history.pushState({ view: 'topic', id }, '');
   const t = getTopic();
   if (!t) return;
   document.getElementById('topicNameInput').value = t.title;
@@ -4119,6 +4132,54 @@ load();
 applyTheme(state.theme || 'parchment');
 renderWall();
 updateWebToggleUI();
+
+// ── Android / browser back button handler ──
+// On app load, set wall state so we have a baseline history entry.
+history.replaceState({ view: 'wall' }, '');
+
+window.addEventListener('popstate', (e) => {
+  const inTopic = document.getElementById('viewTopic')?.classList.contains('active');
+  if (inTopic) {
+    // Back from topic → go to wall (push wall state back so next back triggers exit confirm)
+    showWall();
+    history.replaceState({ view: 'wall' }, '');
+  } else {
+    // Back from wall → show exit confirm instead of leaving the app
+    history.pushState({ view: 'wall' }, ''); // re-push so we stay in app
+    showExitConfirm();
+  }
+});
+
+function showExitConfirm() {
+  // Don't show on desktop — only meaningful on mobile where back = exit
+  const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (!isMobileDevice) return;
+
+  const existing = document.getElementById('exitConfirmOverlay');
+  if (existing) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'intent-overlay';
+  overlay.id = 'exitConfirmOverlay';
+  overlay.innerHTML = `
+    <div class="intent-modal" style="max-width:300px;text-align:center;">
+      <div class="intent-title" style="margin-bottom:8px;">Leave MyResAssist?</div>
+      <div class="intent-src" style="margin-bottom:18px;font-size:13px;">Your research is saved. You can return any time.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="intent-opt" style="justify-content:center;font-weight:600;" onclick="document.getElementById('exitConfirmOverlay').remove()">
+          <div class="intent-opt-title">← Stay on Research Wall</div>
+        </button>
+        <button class="intent-cancel" style="font-size:13px;padding:8px;align-self:center;color:var(--ink-4);" onclick="document.getElementById('exitConfirmOverlay').remove(); history.go(-1);">
+          Leave app
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
 </script>
 </body>
 </html>
