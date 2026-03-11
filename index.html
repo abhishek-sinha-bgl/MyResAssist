@@ -1954,7 +1954,6 @@ function showClaimViz() {
   const t = getTopic();
   if (!t || !(t.claims||[]).length) { toast('No claims to visualise yet', 'err'); return; }
 
-  const claims = t.claims;
   const existing = document.getElementById('claimVizOverlay');
   if (existing) { existing.remove(); return; }
 
@@ -1962,166 +1961,223 @@ function showClaimViz() {
   overlay.className = 'viz-overlay';
   overlay.id = 'claimVizOverlay';
 
-  const SIZE = 460; // canvas logical size
-  const CX = SIZE / 2, CY = SIZE / 2;
-  const MAX_R = SIZE * 0.44; // max radial distance from centre
-
   overlay.innerHTML = `
-    <div class="viz-modal">
-      <div>
-        <button class="viz-close" onclick="document.getElementById('claimVizOverlay').remove()">✕</button>
-        <div class="viz-title">Research Map — ${esc(t.title)}</div>
-        <div class="viz-subtitle">RADIAL DISTANCE = CONFIDENCE · INNER RING = STRONGEST FINDINGS · ◆ = CONTRADICTION</div>
+    <div class="viz-modal" id="vizModal">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div>
+          <div class="viz-title">Research Map — ${esc(t.title)}</div>
+          <div class="viz-subtitle">INNER = HIGH CONFIDENCE · OUTER = UNCERTAIN · ◆ = CONTRADICTION · CLICK TO JUMP</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="viz-close" id="vizMaxBtn" title="Maximise" onclick="toggleVizMax()" style="font-size:14px;padding:2px 8px">⤢</button>
+          <button class="viz-close" onclick="document.getElementById('claimVizOverlay').remove()">✕</button>
+        </div>
       </div>
       <div class="viz-canvas-wrap">
-        <canvas class="viz-canvas" id="vizCanvas" width="${SIZE}" height="${SIZE}"></canvas>
+        <canvas class="viz-canvas" id="vizCanvas"></canvas>
         <div class="viz-tooltip" id="vizTooltip"></div>
       </div>
       <div class="viz-legend">
-        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#2d6a4f"></div>High confidence (≥70%)</div>
-        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#b45309"></div>Medium (35–69%)</div>
-        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#c0392b"></div>Low / uncertain</div>
-        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#7c3aed;border-radius:2px;transform:rotate(45deg)"></div>Contradiction</div>
-        <div class="viz-leg-item" style="margin-left:auto;color:var(--ink-4)">Click a node to jump to claim</div>
+        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#00d4ff;box-shadow:0 0 5px #00d4ff88"></div>High confidence (≥70%)</div>
+        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#f59e0b"></div>Medium (35–69%)</div>
+        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#ef4444"></div>Low / uncertain</div>
+        <div class="viz-leg-item"><div class="viz-leg-dot" style="background:#a78bfa;border-radius:2px;transform:rotate(45deg)"></div>Contradiction</div>
+        <div class="viz-leg-item" style="margin-left:auto;color:var(--ink-4);font-size:10px">${t.claims.length} claims</div>
       </div>
     </div>`;
 
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-  const canvas = document.getElementById('vizCanvas');
-  const tooltip = document.getElementById('vizTooltip');
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
-  canvas.style.width = SIZE + 'px'; canvas.style.height = SIZE + 'px';
-  ctx.scale(dpr, dpr);
+  let isMax = false;
+  window.toggleVizMax = () => {
+    isMax = !isMax;
+    const modal = document.getElementById('vizModal');
+    const btn = document.getElementById('vizMaxBtn');
+    if (isMax) {
+      modal.style.cssText = 'max-width:none;width:calc(100vw - 48px);height:calc(100vh - 48px);display:flex;flex-direction:column;border-radius:8px;padding:20px';
+      btn.textContent = '⤡';
+    } else {
+      modal.style.cssText = '';
+      btn.textContent = '⤢';
+    }
+    nodes = renderViz() || nodes;
+  };
 
-  // Compute node positions
-  // Separate normal claims and contradictions into different angular zones
-  const normal = claims.filter(c => !c.contradicts);
-  const contra = claims.filter(c => c.contradicts);
+  function renderViz() {
+    const claims = t.claims;
+    const canvas = document.getElementById('vizCanvas');
+    const modal = document.getElementById('vizModal');
+    if (!canvas || !modal) return [];
 
-  const nodes = [];
-  // Normal claims: 0° to 300° (leaving 60° gap for contradictions)
-  normal.forEach((c, i) => {
-    const angle = (i / Math.max(normal.length, 1)) * 300 * (Math.PI / 180);
-    const r = (1 - (c.confidence || 0.5)) * MAX_R;
-    nodes.push({ claim: c, x: CX + r * Math.cos(angle - Math.PI/2), y: CY + r * Math.sin(angle - Math.PI/2), isContra: false });
-  });
-  // Contradictions: 300° to 360°
-  contra.forEach((c, i) => {
-    const angle = (300 + (i / Math.max(contra.length, 1)) * 60) * (Math.PI / 180);
-    const r = (1 - (c.confidence || 0.5)) * MAX_R;
-    nodes.push({ claim: c, x: CX + r * Math.cos(angle - Math.PI/2), y: CY + r * Math.sin(angle - Math.PI/2), isContra: true });
-  });
+    const modalW = modal.clientWidth || 560;
+    const avail = isMax ? Math.min(modal.clientHeight - 150, modalW - 40) : Math.min(modalW - 48, 500);
+    const SIZE = Math.max(300, avail);
+    const CX = SIZE / 2, CY = SIZE / 2;
+    const MAX_R = SIZE * 0.42;
+    const nodeR = Math.max(5, Math.min(9, Math.round(SIZE / 55)));
 
-  function draw() {
-    ctx.clearRect(0, 0, SIZE, SIZE);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
+    canvas.style.width = SIZE + 'px'; canvas.style.height = SIZE + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
 
-    // Background rings
-    const ringConf = [0.85, 0.65, 0.35, 0];
-    const ringLabels = ['Core (≥85%)', 'Supported', 'Uncertain', ''];
-    const ringColors = ['rgba(45,106,79,.08)', 'rgba(180,83,9,.06)', 'rgba(192,57,43,.04)', ''];
-    ringConf.forEach((conf, ri) => {
-      const r = (1 - conf) * MAX_R;
-      ctx.beginPath(); ctx.arc(CX, CY, r, 0, Math.PI*2);
-      ctx.fillStyle = ringColors[ri]; ctx.fill();
-      ctx.strokeStyle = 'rgba(128,128,128,.12)'; ctx.lineWidth = 1; ctx.stroke();
-    });
+    // Dark background regardless of theme
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, SIZE, SIZE);
 
-    // Topic title at centre
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillStyle = 'rgba(128,128,128,.5)';
-    // Wrap title to 2 lines max
-    const words = t.title.split(' ');
-    const line1 = words.slice(0, Math.ceil(words.length/2)).join(' ');
-    const line2 = words.slice(Math.ceil(words.length/2)).join(' ');
-    ctx.fillText(line1, CX, CY - 7);
-    ctx.fillText(line2, CX, CY + 7);
-
-    // Draw nodes
-    nodes.forEach(node => {
-      const c = node.claim;
-      const conf = c.confidence || 0.5;
-      const color = node.isContra ? '#7c3aed'
-        : conf >= 0.7 ? '#2d6a4f'
-        : conf >= 0.35 ? '#b45309' : '#c0392b';
-      const nodeR = 7;
-
-      ctx.save();
-      if (node.isContra) {
-        // Diamond shape for contradictions
-        ctx.translate(node.x, node.y);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillStyle = color;
-        ctx.fillRect(-nodeR * 0.75, -nodeR * 0.75, nodeR * 1.5, nodeR * 1.5);
-        ctx.restore();
-      } else {
-        ctx.beginPath(); ctx.arc(node.x, node.y, nodeR, 0, Math.PI*2);
-        ctx.fillStyle = color; ctx.fill();
-        // Confidence ring
-        ctx.strokeStyle = color; ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath(); ctx.arc(node.x, node.y, nodeR + 3, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.restore();
+    // Concentric rings with distinct colours and labels
+    const rings = [
+      { r: (1-0.85)*MAX_R, fill:'rgba(0,212,255,.07)',   stroke:'rgba(0,212,255,.3)',   label:'85%+' },
+      { r: (1-0.65)*MAX_R, fill:'rgba(245,158,11,.05)',  stroke:'rgba(245,158,11,.25)', label:'65%' },
+      { r: (1-0.35)*MAX_R, fill:'rgba(239,68,68,.035)',  stroke:'rgba(239,68,68,.2)',   label:'35%' },
+      { r: MAX_R,           fill:'rgba(239,68,68,.015)', stroke:'rgba(100,100,100,.12)',label:'' },
+    ];
+    rings.forEach(ring => {
+      ctx.beginPath(); ctx.arc(CX, CY, ring.r, 0, Math.PI*2);
+      ctx.fillStyle = ring.fill; ctx.fill();
+      ctx.strokeStyle = ring.stroke; ctx.lineWidth = 1; ctx.stroke();
+      if (ring.label) {
+        ctx.font = '9px monospace'; ctx.fillStyle = ring.stroke;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(ring.label, CX, CY - ring.r + 1);
       }
     });
+
+    // Contradiction zone wedge
+    const hasContra = claims.some(c => c.contradicts);
+    if (hasContra) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(167,139,250,.22)'; ctx.lineWidth = 1; ctx.setLineDash([3,5]);
+      ctx.beginPath(); ctx.moveTo(CX, CY);
+      ctx.arc(CX, CY, MAX_R, 300*(Math.PI/180)-Math.PI/2, 360*(Math.PI/180)-Math.PI/2);
+      ctx.lineTo(CX, CY); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(167,139,250,.4)';
+      ctx.textAlign = 'center';
+      const la = 330*(Math.PI/180)-Math.PI/2;
+      ctx.fillText('CONTRA', CX+(MAX_R+16)*Math.cos(la), CY+(MAX_R+16)*Math.sin(la));
+      ctx.restore();
+    }
+
+    // Topic label
+    const words = t.title.split(' '), half = Math.ceil(words.length/2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.max(9, Math.round(SIZE/46))}px sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.fillText(words.slice(0,half).join(' '), CX, CY-8);
+    ctx.fillText(words.slice(half).join(' '), CX, CY+8);
+
+    // Compute positions
+    const normal = claims.filter(c => !c.contradicts);
+    const contra = claims.filter(c => c.contradicts);
+    const rawNodes = [];
+
+    normal.forEach((c, i) => {
+      const angle = (i / Math.max(normal.length, 1)) * 300*(Math.PI/180) - Math.PI/2;
+      const jitter = ((i % 3) - 1) * nodeR * 0.7;
+      const r = Math.max(nodeR*2, Math.min(MAX_R-nodeR, (1-(c.confidence||0.5))*MAX_R + jitter));
+      rawNodes.push({ claim:c, x:CX+r*Math.cos(angle), y:CY+r*Math.sin(angle), isContra:false });
+    });
+    contra.forEach((c, i) => {
+      const angle = (300 + (i/Math.max(contra.length,1))*58)*(Math.PI/180) - Math.PI/2;
+      const r = Math.max(nodeR*2, Math.min(MAX_R-nodeR, (1-(c.confidence||0.5))*MAX_R));
+      rawNodes.push({ claim:c, x:CX+r*Math.cos(angle), y:CY+r*Math.sin(angle), isContra:true });
+    });
+
+    // Force-spread overlapping nodes (3 passes)
+    const minDist = nodeR * 3.5;
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < rawNodes.length; i++) {
+        for (let j = i+1; j < rawNodes.length; j++) {
+          const dx = rawNodes[j].x-rawNodes[i].x, dy = rawNodes[j].y-rawNodes[i].y;
+          const dist = Math.sqrt(dx*dx+dy*dy) || 0.01;
+          if (dist < minDist) {
+            const push = (minDist-dist)/2, nx = dx/dist, ny = dy/dist;
+            const mg = nodeR+3;
+            rawNodes[i].x = Math.max(mg,Math.min(SIZE-mg, rawNodes[i].x-nx*push));
+            rawNodes[i].y = Math.max(mg,Math.min(SIZE-mg, rawNodes[i].y-ny*push));
+            rawNodes[j].x = Math.max(mg,Math.min(SIZE-mg, rawNodes[j].x+nx*push));
+            rawNodes[j].y = Math.max(mg,Math.min(SIZE-mg, rawNodes[j].y+ny*push));
+          }
+        }
+      }
+    }
+
+    // Draw nodes
+    rawNodes.forEach(node => {
+      const conf = node.claim.confidence || 0.5;
+      const color = node.isContra ? '#a78bfa' : conf>=0.7 ? '#00d4ff' : conf>=0.35 ? '#f59e0b' : '#ef4444';
+      ctx.save();
+      ctx.shadowColor = color; ctx.shadowBlur = conf>=0.7 ? 12 : 6;
+      if (node.isContra) {
+        ctx.translate(node.x, node.y); ctx.rotate(Math.PI/4);
+        ctx.fillStyle = color;
+        ctx.fillRect(-nodeR*0.85,-nodeR*0.85,nodeR*1.7,nodeR*1.7);
+        ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1;
+        ctx.strokeRect(-nodeR*0.85,-nodeR*0.85,nodeR*1.7,nodeR*1.7);
+      } else {
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(node.x,node.y,nodeR,0,Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(node.x,node.y,nodeR,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    return rawNodes;
   }
 
-  draw();
+  let nodes = renderViz();
 
-  // Hover and click
-  const rect = () => canvas.getBoundingClientRect();
-  const scaleX = SIZE / (rect().width || SIZE);
-  const scaleY = SIZE / (rect().height || SIZE);
+  const canvas = document.getElementById('vizCanvas');
+  const tooltip = document.getElementById('vizTooltip');
+
+  const getScale = () => {
+    const r = canvas.getBoundingClientRect();
+    const S = parseInt(canvas.style.width) || 500;
+    return { sx: S/(r.width||S), sy: S/(r.height||S), r };
+  };
 
   canvas.addEventListener('mousemove', e => {
-    const r = rect();
-    const mx = (e.clientX - r.left) * scaleX;
-    const my = (e.clientY - r.top) * scaleY;
-    let hit = null;
+    const {sx,sy,r} = getScale();
+    const mx=(e.clientX-r.left)*sx, my=(e.clientY-r.top)*sy;
+    let hit=null;
     for (const node of nodes) {
-      const dx = mx - node.x, dy = my - node.y;
-      if (Math.sqrt(dx*dx + dy*dy) < 12) { hit = node; break; }
+      const dx=mx-node.x, dy=my-node.y;
+      if (Math.sqrt(dx*dx+dy*dy)<14) { hit=node; break; }
     }
     if (hit) {
-      canvas.style.cursor = 'pointer';
-      tooltip.style.display = 'block';
-      const conf = Math.round((hit.claim.confidence||0.5)*100);
-      tooltip.innerHTML = `<strong>${esc(hit.claim.text.substring(0,120))}${hit.claim.text.length>120?'…':''}</strong><br><span style="color:var(--ink-4);font-size:11px">${conf}% confidence${hit.isContra?' · Contradiction':''}</span>`;
-      const tx = Math.min(e.clientX - r.left + 10, r.width - 230);
-      const ty = Math.max(e.clientY - r.top - 60, 4);
-      tooltip.style.left = tx + 'px'; tooltip.style.top = ty + 'px';
+      canvas.style.cursor='pointer'; tooltip.style.display='block';
+      const conf=Math.round((hit.claim.confidence||0.5)*100);
+      const tier=conf>=70?'🟢':conf>=35?'🟡':'🔴';
+      tooltip.innerHTML=`<strong>${esc(hit.claim.text.substring(0,130))}${hit.claim.text.length>130?'…':''}</strong><br><span style="color:var(--ink-4);font-size:11px">${tier} ${conf}% confidence${hit.isContra?' · ◆ Contradiction':''}</span>`;
+      const tx=Math.min(e.clientX-r.left+12,r.width-240), ty=Math.max(e.clientY-r.top-70,4);
+      tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
     } else {
-      canvas.style.cursor = 'default';
-      tooltip.style.display = 'none';
+      canvas.style.cursor='default'; tooltip.style.display='none';
     }
   });
 
   canvas.addEventListener('click', e => {
-    const r = rect();
-    const mx = (e.clientX - r.left) * scaleX;
-    const my = (e.clientY - r.top) * scaleY;
+    const {sx,sy,r} = getScale();
+    const mx=(e.clientX-r.left)*sx, my=(e.clientY-r.top)*sy;
     for (const node of nodes) {
-      const dx = mx - node.x, dy = my - node.y;
-      if (Math.sqrt(dx*dx + dy*dy) < 12) {
+      const dx=mx-node.x, dy=my-node.y;
+      if (Math.sqrt(dx*dx+dy*dy)<14) {
         overlay.remove();
-        // Switch to All filter and scroll to the claim
         filterClaims('all', document.querySelector('.f-chip'));
         setTimeout(() => {
-          const card = document.querySelector(`[data-claim-id="${node.claim.id}"]`);
+          const card=document.querySelector(`[data-claim-id="${node.claim.id}"]`);
           if (card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.classList.add('cc-highlight'); setTimeout(()=>card.classList.remove('cc-highlight'),1800); }
-        }, 100);
+        },100);
         break;
       }
     }
   });
 
-  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display='none'; });
+  window.addEventListener('resize', () => { if(isMax) nodes=renderViz()||nodes; });
 }
 
 function shareKpSummary() {
@@ -2905,43 +2961,12 @@ function updateClaimDrawer(card, claim) {
 let _validateClaimId = null;
 
 function showValidatePopup(claimId) {
+  // No popup — fire directly with the same structured research prompt
   const t = getTopic();
   const claim = (t?.claims||[]).find(c=>c.id===claimId);
   if (!claim) return;
   _validateClaimId = claimId;
-
-  const snippet = claim.text.length > 80 ? claim.text.substring(0,80)+'…' : claim.text;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'intent-overlay';
-  overlay.id = 'validateOverlay';
-  overlay.innerHTML = `
-    <div class="intent-modal">
-      <div class="intent-title">⊕ Validate claim</div>
-      <div class="intent-src">${esc(snippet)}</div>
-      <div class="intent-opts">
-        <button class="intent-opt" onclick="dispatchValidate('credible')">
-          <div class="intent-opt-title">🟢 Find credible sources</div>
-          <div class="intent-opt-desc">Locate primary sources — peer-reviewed, official, or major newswires — that bear on this claim</div>
-        </button>
-        <button class="intent-opt" onclick="dispatchValidate('supporting')">
-          <div class="intent-opt-title">📊 Research supporting data</div>
-          <div class="intent-opt-desc">Find statistics, studies, and data that reinforce or quantify this claim</div>
-        </button>
-        <button class="intent-opt" onclick="dispatchValidate('contrary')">
-          <div class="intent-opt-title">⚖ Find contrary viewpoints</div>
-          <div class="intent-opt-desc">Seek credible counter-arguments, contradictions, or alternative interpretations</div>
-        </button>
-        <button class="intent-opt" onclick="dispatchValidate('all')">
-          <div class="intent-opt-title">⚡ Full validation</div>
-          <div class="intent-opt-desc">Run all three — credible sources, supporting data, and contrary views — then synthesise</div>
-        </button>
-      </div>
-      <button class="intent-cancel" onclick="closeValidatePopup()">Cancel</button>
-    </div>`;
-
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeValidatePopup(); });
+  dispatchValidate('all');
 }
 
 function closeValidatePopup() {
@@ -2952,25 +2977,28 @@ function closeValidatePopup() {
 
 function dispatchValidate(mode) {
   const claimId = _validateClaimId;
-  closeValidatePopup();
+  _validateClaimId = null;
   if (!claimId) return;
 
   const t = getTopic();
   const claim = (t?.claims||[]).find(c=>c.id===claimId);
   if (!claim) return;
 
-  const claimText = claim.text.substring(0,180);
+  const claimText = claim.text.substring(0, 200);
 
-  const prompts = {
-    credible:   `Find the most authoritative primary sources that bear on this claim: "${claimText}". Prioritise in order: (1) peer-reviewed studies or academic sources, (2) government or official statistics, (3) major newswires (Reuters, AP, AFP), (4) established quality outlets. For each source found, state whether it supports, contradicts, or is ambiguous on the claim. Conclude with an overall assessment of the claim's credibility.`,
-    supporting: `Find statistics, studies, and empirical data that support or quantify this claim: "${claimText}". Focus on primary data sources — official statistics, academic research, and verified surveys. Cite specific figures where available and note the recency and authority of each source.`,
-    contrary:   `Find credible counter-arguments, contradictions, or alternative interpretations of this claim: "${claimText}". Look for: (1) evidence that directly contradicts the claim, (2) expert dissent from established sources, (3) important nuances or caveats that qualify the claim. Be specific about what each source says and why it challenges the claim.`,
-    all:        `Conduct a full validation of this claim: "${claimText}".\n\n1. CREDIBLE SOURCES: Find the most authoritative sources (peer-reviewed, official, major newswires) that bear on this claim.\n2. SUPPORTING DATA: Identify statistics and empirical data that support or quantify it.\n3. CONTRARY VIEWS: Find credible counter-arguments or contradictions.\n4. SYNTHESIS: Based on the weight of evidence, is this claim well-supported, contested, or unsupported?\n\nBe specific, cite sources for each point, and clearly distinguish between what is established and what is disputed.`,
-  };
+  // Single rigorous prompt — same structured output as research turns
+  // The buildSystem already injects the KB and requests RESEARCH_JSON_START block,
+  // so this fires through the full pipeline (contradictions, follow-ons, absorb panel)
+  const q = `Validate this claim from our research knowledge base: "${claimText}"
 
-  const q = prompts[mode] || prompts.credible;
+1. CREDIBILITY: What are the most authoritative sources (peer-reviewed, official, major newswires) bearing on this?
+2. SUPPORTING DATA: What statistics or empirical findings support or quantify it?
+3. CONTRARY EVIDENCE: What credible counter-arguments, contradictions, or important caveats qualify it?
+4. VERDICT: Is this claim well-supported, contested, or unsupported? Give a confidence assessment.
 
-  // Mobile fix: detect mobile via FAB visibility (same pattern as researchGaps)
+Be specific. Cite sources for each point. Clearly distinguish established facts from contested claims.`;
+
+  // Mobile fix
   const fab = document.getElementById('chatFab');
   const isMobile = fab && getComputedStyle(fab).display !== 'none';
   if (isMobile) {
@@ -3494,30 +3522,36 @@ function buildSystem() {
   const t = getTopic();
   const topicCtx = t ? `You are helping research the topic: "${t.title}". ` : '';
   const trustedCtx = state.trustedSources?.length
-    ? ` The user particularly trusts these sources and you should prioritise them when relevant: ${state.trustedSources.join(', ')}.`
+    ? ` Prioritise these trusted sources when relevant: ${state.trustedSources.join(', ')}.`
     : '';
 
   const isFirstMessage = t && !(state.messages || []).some(m => m.role === 'assistant');
 
-  const baseInstructions = `You are MyResAssist, a precision research assistant. ${topicCtx}Provide well-structured, factual, insightful responses. Use **bold** for key terms. Be direct and substantive. When web search is available, use it for current information. When citing sources, prioritise in this order: (1) peer-reviewed academic sources, (2) government/official statistics, (3) major newswires (Reuters, AP, AFP, Bloomberg), (4) established quality outlets. Flag when a claim relies only on lower-tier sources.${trustedCtx}`;
+  // Inject current KB state so every turn builds on what's already known
+  const existingClaims = t?.claims || [];
+  const kbCtx = existingClaims.length
+    ? `\n\nCURRENT KNOWLEDGE BASE (${existingClaims.length} claims already captured — do not restate these, focus on what they miss or what challenges them):\n${existingClaims.slice(0,12).map((c,i) => `${i+1}. [${Math.round((c.confidence||0.5)*100)}%] ${c.text}${c.contradicts?' ⚠ CONTRADICTED':''}`).join('\n')}${existingClaims.length > 12 ? `\n…and ${existingClaims.length-12} more.` : ''}`
+    : '';
 
-  // On the first message of a new topic, use the structured deep-research protocol
-  const researchProtocol = isFirstMessage ? `
+  const baseInstructions = `You are MyResAssist, a precision research assistant. ${topicCtx}Provide well-structured, factual, insightful responses. Use **bold** for key terms. Be direct and substantive. When web search is available, use it. Cite sources in priority order: (1) peer-reviewed academic, (2) government/official statistics, (3) major newswires (Reuters, AP, AFP, Bloomberg), (4) established quality outlets. Flag claims with only lower-tier sourcing.${trustedCtx}${kbCtx}`;
 
-RESEARCH PROTOCOL — apply to this first response only:
-1. Open with a 2-3 sentence CONCLUSION stating the core finding directly.
-2. TOP 5 POINTS — for each: one clear assertion (2 sentences max, ~200 chars), one supporting data point or statistic, one citation. Keep each point under 300 characters total.
-3. TOP 3 CONTRADICTIONS — for each: name the tension in one sentence, state the evidence on each side briefly, cite the source. Under 200 characters each.
-4. THREE FOLLOW-ON TOPICS for deeper research — one sentence each.
+  // Research protocol fires on EVERY message (not just first) so follow-on turns
+  // produce structured output and contradictions, conditioned on the KB above
+  const pointCount = isFirstMessage ? 5 : 3;
+  const contraCount = isFirstMessage ? 3 : 2;
+  const researchProtocol = `
 
-Self-critique: Before finalising your 5 points, identify the 2 weakest claims in your draft — where evidence is thinnest or you may have over-generalised. Rewrite those with appropriate epistemic hedging (e.g. "evidence suggests..." rather than stating as fact).
-
-After your full prose response, append this block exactly — no extra text around it:
+STRUCTURED OUTPUT — always append this block after your prose response:
 RESEARCH_JSON_START
 {"points":[{"claim":"...","data":"...","citation":"...","confidence":0.0}],"contradictions":[{"tension":"...","side_a":"...","side_b":"...","citation":"..."}],"follow_on":["...","...","..."]}
 RESEARCH_JSON_END
 
-Confidence guide: 0.85+ = named primary source (govt/academic/major newswire). 0.65–0.84 = established outlet or named expert. 0.40–0.64 = general finding, source unclear. Below 0.40 = inferred or anecdotal. Do not inflate confidence.` : '';
+Rules:
+- points: ${pointCount} NEW findings not already in the knowledge base above. Each: one assertion (~150 chars), one data point, one citation.
+- contradictions: up to ${contraCount}. Only where genuine opposing evidence exists — name the tension, state both sides, cite at least one source. ${isFirstMessage ? '' : 'Prioritise contradictions that challenge the existing knowledge base claims.'}
+- follow_on: 3 focused research questions that would most advance understanding of this topic.
+- Self-critique: before finalising your points, identify the 2 weakest claims and rewrite with epistemic hedging ("evidence suggests…" not stated as fact).
+- Confidence: 0.85+ = named primary source. 0.65–0.84 = established outlet/expert. 0.40–0.64 = general finding. Below 0.40 = inferred. Do not inflate.`;
 
   return baseInstructions + researchProtocol;
 }
